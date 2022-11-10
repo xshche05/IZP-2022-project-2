@@ -108,7 +108,7 @@ void clear_cluster(struct cluster_t *c)
 }
 
 /// Chunk of cluster objects. Value recommended for reallocation.
-const int CLUSTER_CHUNK = 1;
+const int CLUSTER_CHUNK = 10;
 
 /*
  Zmena kapacity shluku 'c' na kapacitu 'new_cap'.
