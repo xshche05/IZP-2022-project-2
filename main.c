@@ -82,9 +82,12 @@ void init_cluster(struct cluster_t *c, int cap)
 {
     assert(c != NULL);
     assert(cap >= 0);
-
-    c->capacity = cap;
-    c->obj = calloc(cap, sizeof(struct obj_t));
+    if (c->obj != NULL)
+        c->capacity = cap;
+    else
+        c->capacity = 0;
+    c->size = 0;
+    c->obj = calloc(c->capacity, sizeof(struct obj_t));
 }
 
 /*
@@ -92,11 +95,11 @@ void init_cluster(struct cluster_t *c, int cap)
  */
 void clear_cluster(struct cluster_t *c)
 {
-    // TODO
     assert(c != NULL);
     c->size = 0;
     c->capacity = 0;
     free(c->obj);
+    c ->obj = NULL;
     init_cluster(c, c->capacity);
 }
 
@@ -133,7 +136,6 @@ struct cluster_t *resize_cluster(struct cluster_t *c, int new_cap)
  */
 void append_cluster(struct cluster_t *c, struct obj_t obj)
 {
-    // TODO
     assert(c != NULL);
     if (c->size >= c->capacity) {
         resize_cluster(c, c->capacity + CLUSTER_CHUNK);
@@ -157,7 +159,10 @@ void merge_clusters(struct cluster_t *c1, struct cluster_t *c2)
     assert(c1 != NULL);
     assert(c2 != NULL);
 
-    // TODO
+    sort_cluster(c1);
+    for (int i = 0; i < c2->size; i++) {
+        append_cluster(c1, c2->obj[i]);
+    }
 }
 
 /**********************************************************************/
@@ -172,14 +177,11 @@ int remove_cluster(struct cluster_t *carr, int narr, int idx)
 {
     assert(idx < narr);
     assert(narr > 0);
-
+    clear_cluster(&carr[idx]);
     for (int i = idx; i < narr - 1; i++) {
         carr[i] = carr[i + 1];
     }
-
     return narr - 1;
-
-    // TODO
 }
 
 /*
@@ -194,9 +196,7 @@ float obj_distance(struct obj_t *o1, struct obj_t *o2)
     float y1 = o1->y;
     float x2 = o2->x;
     float y2 = o2->y;
-
     float distance = sqrtf(powf(x2 - x1, 2) + powf(y2 - y1, 2));
-
     return distance;
 }
 
@@ -243,8 +243,6 @@ void find_neighbours(struct cluster_t *carr, int narr, int *c1, int *c2)
             }
         }
     }
-
-    // TODO
 }
 
 // pomocna funkce pro razeni shluku
@@ -302,14 +300,19 @@ int load_clusters(char *filename, struct cluster_t **arr)
     fgets(buffer, 100, file);
     char *endPt = strchr(buffer, '=');
     int count = strtol(endPt+1, NULL, 10);
+    *arr = (struct cluster_t *) malloc(count * sizeof(struct cluster_t));
     int i = 0;
     while (fgets(buffer, 100, file) != NULL && i < count)
     {
-        int id, x, y;
+        int id;
+        float x, y;
         id = strtol(buffer, &endPt, 10);
-        x = strtol(endPt, &endPt, 10);
-        y = strtol(endPt, NULL, 10);
-        dfmt("id: %d, x: %d, y: %d", id, x, y);
+        x = (float) strtol(endPt, &endPt, 10);
+        y = (float) strtol(endPt, NULL, 10);
+        struct obj_t obj = {id, x, y};
+        init_cluster(&(*arr)[i], 1);
+        append_cluster(&(*arr)[i], obj);
+        i++;
     }
     return count;
 }
@@ -334,7 +337,7 @@ void parse_args(int argc, char *argv[], int *n, char **filename) {
         *n = 1;
     } else if (argc == 3) {
         *filename = argv[1];
-        *n = atoi(argv[2]);
+        *n = atoi(argv[2]); // dostaneme pocet
     } else {
         fprintf(stderr, "Invalid arguments");
     }
@@ -346,6 +349,13 @@ int main(int argc, char *argv[])
     int cluster_amount;
     char *filename;
     parse_args(argc, argv, &cluster_amount, &filename);
-    load_clusters(filename, &clusters);
+    int current_cluster_amount = load_clusters(filename, &clusters);
+    while (cluster_amount < current_cluster_amount) {
+        int c1, c2;
+        find_neighbours(clusters, current_cluster_amount, &c1, &c2);
+        merge_clusters(&clusters[c1], &clusters[c2]);
+        current_cluster_amount = remove_cluster(clusters, current_cluster_amount, c2);
+    }
+    print_clusters(clusters, current_cluster_amount);
     return 0;
 }
