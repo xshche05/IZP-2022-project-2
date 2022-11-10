@@ -85,7 +85,7 @@ void init_cluster(struct cluster_t *c, int cap)
     assert(cap >= 0);
     c->capacity = cap;
     if (cap != 0) {
-        c->obj = malloc(cap * sizeof(struct obj_t));
+        c->obj = malloc(c->capacity * sizeof(struct obj_t));
     }
     c->size = 0;
 }
@@ -101,7 +101,6 @@ void clear_cluster(struct cluster_t *c)
     free(c->obj);
     c->obj = NULL;
     init_cluster(c, c->capacity);
-    dfmt("clear_cluster: %p", c ->obj);
 }
 
 /// Chunk of cluster objects. Value recommended for reallocation.
