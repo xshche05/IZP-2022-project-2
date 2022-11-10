@@ -332,7 +332,6 @@ void print_clusters(struct cluster_t *carr, int narr)
     {
         printf("cluster %d: ", i);
         print_cluster(&carr[i]);
-        clear_cluster(&carr[i]);
     }
 }
 
