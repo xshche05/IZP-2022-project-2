@@ -182,9 +182,6 @@ int remove_cluster(struct cluster_t *carr, int narr, int idx)
     for (int i = idx; i < narr - 1; i++) {
         carr[i] = carr[i + 1];
     }
-    size_t size = sizeof(struct cluster_t) * (narr - 1);
-    void *arr = realloc(carr, size);
-    *carr = *(struct cluster_t*)arr;
     return narr - 1;
 }
 
@@ -331,6 +328,7 @@ void print_clusters(struct cluster_t *carr, int narr)
     for (int i = 0; i < narr; i++)
     {
         printf("cluster %d: ", i);
+        dfmt("size=%d, capacity=%d", carr[i].size, carr[i].capacity);
         print_cluster(&carr[i]);
     }
 }
@@ -350,6 +348,7 @@ void parse_args(int argc, char *argv[], int *n, char **filename) {
 int main(int argc, char *argv[])
 {
     struct cluster_t *clusters;
+    dfmt("size of struct obj_t: %llu", sizeof(struct obj_t));
     int cluster_amount;
     char *filename;
     parse_args(argc, argv, &cluster_amount, &filename);
