@@ -301,7 +301,7 @@ int load_clusters(char *filename, struct cluster_t **arr)
         fprintf(stderr, "Error: File %s could not be opened.\n", filename);
         return -1;
     }
-    char buffer[101];
+    char *buffer = malloc(sizeof(char) * 101);
     fgets(buffer, 100, file);
     char *endPt = strchr(buffer, '=');
     int count = strtol(endPt+1, NULL, 10);
@@ -319,6 +319,7 @@ int load_clusters(char *filename, struct cluster_t **arr)
         append_cluster(&(*arr)[i], obj);
         i++;
     }
+    free(buffer);
     return count;
 }
 
