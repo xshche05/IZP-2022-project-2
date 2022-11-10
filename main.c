@@ -1,9 +1,10 @@
 /**
- * Kostra programu pro 2. projekt IZP 2022/23
- *
- * Jednoducha shlukova analyza: 2D nejblizsi soused.
- * Single linkage
+ * 2. projekt IZP 2022/23
+ * Autor: Kirill Shchetiniuk,
+ * Login: xshche05
+ * Datum: 2022-11-10
  */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -83,11 +84,15 @@ void init_cluster(struct cluster_t *c, int cap)
     assert(c != NULL);
     assert(cap >= 0);
     if (c->obj != NULL)
+    {
         c->capacity = cap;
+        c->obj = malloc(c->capacity*sizeof(struct obj_t));
+    }
     else
+    {
         c->capacity = 0;
+    }
     c->size = 0;
-    c->obj = calloc(c->capacity, sizeof(struct obj_t));
 }
 
 /*
@@ -99,7 +104,6 @@ void clear_cluster(struct cluster_t *c)
     c->size = 0;
     c->capacity = 0;
     free(c->obj);
-    c ->obj = NULL;
     init_cluster(c, c->capacity);
 }
 
