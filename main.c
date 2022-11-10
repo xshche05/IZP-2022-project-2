@@ -84,9 +84,7 @@ void init_cluster(struct cluster_t *c, int cap)
     assert(c != NULL);
     assert(cap >= 0);
     c->capacity = cap;
-    if (cap == 0) {
-        c->obj = NULL;
-    } else {
+    if (cap != 0) {
         c->obj = malloc(cap * sizeof(struct obj_t));
     }
     c->size = 0;
@@ -184,6 +182,8 @@ int remove_cluster(struct cluster_t *carr, int narr, int idx)
     for (int i = idx; i < narr - 1; i++) {
         carr[i] = carr[i + 1];
     }
+    void *arr = realloc(carr, (narr - 1) * sizeof(struct cluster_t));
+    *carr = *(struct cluster_t*)arr;
     return narr - 1;
 }
 
