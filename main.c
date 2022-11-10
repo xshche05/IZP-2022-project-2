@@ -104,6 +104,7 @@ void clear_cluster(struct cluster_t *c)
     c->size = 0;
     c->capacity = 0;
     free(c->obj);
+    c->obj = NULL;
     init_cluster(c, c->capacity);
 }
 
