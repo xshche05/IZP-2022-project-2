@@ -328,11 +328,11 @@ int load_clusters(char *filename, struct cluster_t **arr)
 void print_clusters(struct cluster_t *carr, int narr)
 {
     printf("Clusters:\n");
-    resize_cluster(carr, narr); //
     for (int i = 0; i < narr; i++)
     {
         printf("cluster %d: ", i);
         print_cluster(&carr[i]);
+        clear_cluster(&carr[i]);
     }
 }
 
