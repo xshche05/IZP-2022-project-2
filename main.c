@@ -105,7 +105,7 @@ void clear_cluster(struct cluster_t *c)
 }
 
 /// Chunk of cluster objects. Value recommended for reallocation.
-const int CLUSTER_CHUNK = 1;
+const int CLUSTER_CHUNK = 10;
 
 /*
  Zmena kapacity shluku 'c' na kapacitu 'new_cap'.
@@ -182,6 +182,9 @@ int remove_cluster(struct cluster_t *carr, int narr, int idx)
     for (int i = idx; i < narr - 1; i++) {
         carr[i] = carr[i + 1];
     }
+    size_t size = sizeof(struct cluster_t) * (narr - 1);
+    void *arr = realloc(carr, size);
+    *carr = *(struct cluster_t*)arr;
     return narr - 1;
 }
 
