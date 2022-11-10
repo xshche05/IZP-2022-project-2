@@ -86,7 +86,7 @@ void init_cluster(struct cluster_t *c, int cap)
     if (c->obj != NULL)
     {
         c->capacity = cap;
-        c->obj = malloc(c->capacity*sizeof(struct obj_t));
+        c->obj = calloc(c->capacity, sizeof(struct obj_t));
     }
     else
     {
@@ -304,7 +304,7 @@ int load_clusters(char *filename, struct cluster_t **arr)
     fgets(buffer, 100, file);
     char *endPt = strchr(buffer, '=');
     int count = strtol(endPt+1, NULL, 10);
-    *arr = (struct cluster_t *) malloc(count * sizeof(struct cluster_t));
+    *arr = (struct cluster_t *) calloc(count, sizeof(struct cluster_t));
     int i = 0;
     while (fgets(buffer, 100, file) != NULL && i < count)
     {
