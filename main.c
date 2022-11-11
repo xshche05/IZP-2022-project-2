@@ -314,6 +314,7 @@ int load_clusters(char *filename, struct cluster_t **arr)
         append_cluster(&(*arr)[i], obj);
         i++;
     }
+    fclose(file);
     return count;
 }
 
@@ -357,5 +358,6 @@ int main(int argc, char *argv[])
         current_cluster_amount = remove_cluster(clusters, current_cluster_amount, c2);
     }
     print_clusters(clusters, current_cluster_amount);
+    free(clusters);
     return 0;
 }
