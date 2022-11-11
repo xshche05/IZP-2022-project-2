@@ -359,6 +359,6 @@ int main(int argc, char *argv[])
         current_cluster_amount = remove_cluster(clusters, current_cluster_amount, c2);
     }
     print_clusters(clusters, current_cluster_amount);
-    for ()
+    free(clusters);
     return 0;
 }
