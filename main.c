@@ -329,6 +329,7 @@ void print_clusters(struct cluster_t *carr, int narr)
     {
         printf("cluster %d: ", i);
         print_cluster(&carr[i]);
+        free(carr[i].obj);
     }
 }
 
@@ -358,6 +359,6 @@ int main(int argc, char *argv[])
         current_cluster_amount = remove_cluster(clusters, current_cluster_amount, c2);
     }
     print_clusters(clusters, current_cluster_amount);
-    free(clusters);
+    for ()
     return 0;
 }
