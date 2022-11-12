@@ -41,6 +41,14 @@
 
 #endif
 
+/*
+ * Error codes
+ */
+
+#define ERR_ARGS 101
+#define ERR_INPUT_FILE 102
+#define ERR_INPUT_OBJECTS 103
+
 /*****************************************************************
  * Deklarace potrebnych datovych typu:
  *
@@ -294,7 +302,7 @@ int load_clusters(char *filename, struct cluster_t **arr)
     if (file == NULL)
     {
         fprintf(stderr, "Error: File %s could not be opened.\n", filename);
-        return -1;
+        return -ERR_INPUT_FILE;
     }
     char buffer[101];
     fgets(buffer, 100, file);
@@ -313,6 +321,11 @@ int load_clusters(char *filename, struct cluster_t **arr)
         init_cluster(&(*arr)[i], 1);
         append_cluster(&(*arr)[i], obj);
         i++;
+    }
+    if (i < count)
+    {
+        fprintf(stderr, "Error: File %s does not contain enough objects.\n", filename);
+        return -ERR_INPUT_OBJECTS;
     }
     fclose(file);
     return count;
@@ -333,16 +346,22 @@ void print_clusters(struct cluster_t *carr, int narr)
     }
 }
 
-void parse_args(int argc, char *argv[], int *n, char **filename) {
-    if (argc == 2) {
+/*
+ Parsuje argumenty aplikace.
+ */
+int parse_args(int argc, char *argv[], int *n, char **filename) {
+    if (argc > 1)
         *filename = argv[1];
+    if (argc == 2)
         *n = 1;
-    } else if (argc == 3) {
-        *filename = argv[1];
-        *n = atoi(argv[2]); // dostaneme pocet
-    } else {
-        fprintf(stderr, "Invalid arguments");
+    else if (argc == 3)
+        *n = strtol(argv[2], NULL, 10); // dostaneme pocet objektu
+    else
+    {
+        fprintf(stderr, "Error: Invalid arguments");
+        return -ERR_ARGS;
     }
+    return 0;
 }
 
 int main(int argc, char *argv[])
@@ -350,8 +369,13 @@ int main(int argc, char *argv[])
     struct cluster_t *clusters;
     int cluster_amount;
     char *filename;
-    parse_args(argc, argv, &cluster_amount, &filename);
+    int check_code;
+    check_code = parse_args(argc, argv, &cluster_amount, &filename);
+    if (check_code < 0)
+        return -check_code;
     int current_cluster_amount = load_clusters(filename, &clusters);
+    if (current_cluster_amount < 0)
+        return -current_cluster_amount;
     while (cluster_amount < current_cluster_amount) {
         int c1, c2;
         find_neighbours(clusters, current_cluster_amount, &c1, &c2);
