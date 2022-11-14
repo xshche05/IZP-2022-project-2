@@ -87,16 +87,16 @@ struct cluster_t {
  Inicializace shluku 'c'. Alokuje pamet pro cap objektu (kapacitu).
  Ukazatel NULL u pole objektu znamena kapacitu 0.
 */
-void init_cluster(struct cluster_t *c, int cap)
-{
+void init_cluster(struct cluster_t *c, int cap) {
     assert(c != NULL);
     assert(cap >= 0);
-    if (c->obj == NULL)
-    {
-        cap = 0;
+    if (c->obj == NULL) {
+        c->capacity = 0;
+        c->obj = NULL;
+    } else {
+        c->capacity = cap;
+        c->obj = malloc(c->capacity * sizeof(struct obj_t));
     }
-    c->obj = malloc(cap * sizeof(struct obj_t));
-    c->capacity = cap;
     c->size = 0;
 }
 
