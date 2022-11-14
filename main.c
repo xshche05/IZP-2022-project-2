@@ -90,7 +90,7 @@ struct cluster_t {
 void init_cluster(struct cluster_t *c, int cap) {
     assert(c != NULL);
     assert(cap >= 0);
-    if (c->obj == NULL) {
+    if (c->obj == NULL && cap == 0) {
         c->capacity = 0;
         c->obj = NULL;
     } else {
