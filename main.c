@@ -59,7 +59,8 @@ int err_exit(int code, char *msg)
 
 int err_exit_f(int code, char *msg, FILE *file)
 {
-    fclose(file);
+    if (file != NULL)
+        fclose(file);
     return err_exit(code, msg);
 }
 
