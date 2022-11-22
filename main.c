@@ -364,11 +364,11 @@ int load_clusters(char *filename, struct cluster_t **arr)
         x = (float) strtol(endPt, &endPt, 10);
         y = (float) strtol(endPt, &endPt, 10);
         if (id < 0 || x < 0 || y < 0 || x > 1000 || y > 1000)
-            return err_exit_f(ERR_INPUT_OBJECTS, "Error: File is not in the correct format. OBJ params are out of range.\n", file, *arr, count);
+            return err_exit_f(ERR_INPUT_OBJECTS, "Error: File is not in the correct format. OBJ params are out of range.\n", file, *arr, i);
         if (*endPt != '\0' && *endPt != '\n')
-            return err_exit_f(ERR_INPUT_OBJECTS, "Error: File is not in the correct format. Sth is after OBJ in line\n", file, *arr, count);
+            return err_exit_f(ERR_INPUT_OBJECTS, "Error: File is not in the correct format. Sth is after OBJ in line\n", file, *arr, i);
         if (!check_unique_id(*arr, i, id))
-            return err_exit_f(ERR_INPUT_OBJECTS, "Error: File is not in the correct format. OBJ ID is not unique.\n", file, *arr, count);
+            return err_exit_f(ERR_INPUT_OBJECTS, "Error: File is not in the correct format. OBJ ID is not unique.\n", file, *arr, i);
         struct obj_t obj = {id, x, y};
         init_cluster(&(*arr)[i], 1);
         append_cluster(&(*arr)[i], obj);
@@ -376,7 +376,7 @@ int load_clusters(char *filename, struct cluster_t **arr)
     }
     if (i < count) {
         deallocate_clusters(*arr, i);
-        return err_exit_f(ERR_INPUT_OBJECTS, "Error: File is not in the correct format. Not enough objects.\n", file, *arr, count);
+        return err_exit_f(ERR_INPUT_OBJECTS, "Error: File is not in the correct format. Not enough objects.\n", file, *arr, i);
     }
     fclose(file);
     return count;
