@@ -358,17 +358,14 @@ int load_clusters(char *filename, struct cluster_t **arr)
         x = (float) strtol(endPt, &endPt, 10);
         y = (float) strtol(endPt, &endPt, 10);
         if (id < 0 || x < 0 || y < 0 || x > 1000 || y > 1000) {
-            fclose(file);
             check = err_exit(ERR_INPUT_FILE, "Error: File is not in the correct format. OBJ params are out of range.\n");
             break;
         }
         if (*endPt != '\0' && *endPt != '\n') {
-            fclose(file);
             check = err_exit(ERR_INPUT_FILE, "Error: File is not in the correct format. Sth is after OBJ in line\n");
             break;
         }
         if (!check_unique_id(*arr, i, id)) {
-            fclose(file);
             check = err_exit(ERR_INPUT_FILE, "Error: File is not in the correct format. OBJ ID is not unique.\n");
             break;
         }
