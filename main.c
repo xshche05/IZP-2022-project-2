@@ -337,6 +337,11 @@ int load_clusters(char *filename, struct cluster_t **arr)
         id = strtol(buffer, &endPt, 10);
         x = (float) strtol(endPt, &endPt, 10);
         y = (float) strtol(endPt, &endPt, 10);
+        if (id < 0 || x < 0 || y < 0 || x > 1000 || y > 1000)
+        {
+            fprintf(stderr, "Error: File %s is not in the correct format. OBJ params are out of range.\n", filename);
+            return -ERR_INPUT_FILE;
+        }
         if (*endPt != '\0' && *endPt != '\n')
         {
             fprintf(stderr, "Error: File %s is not in the correct format. Sth is after OBJ in line\n", filename);
