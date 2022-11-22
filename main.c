@@ -53,7 +53,6 @@
 int err_exit(int code, char *msg)
 {
     fprintf(stderr, "%s", msg);
-//    exit(code);
     return -code;
 }
 
