@@ -337,6 +337,11 @@ int load_clusters(char *filename, struct cluster_t **arr)
         id = strtol(buffer, &endPt, 10);
         x = (float) strtol(endPt, &endPt, 10);
         y = (float) strtol(endPt, &endPt, 10);
+        if (*endPt != '\0' && *endPt != '\n')
+        {
+            fprintf(stderr, "Error: File %s is not in the correct format. Sth is after OBJ in line\n", filename);
+            return -ERR_INPUT_FILE;
+        }
         struct obj_t obj = {id, x, y};
         init_cluster(&(*arr)[i], 1);
         append_cluster(&(*arr)[i], obj);
