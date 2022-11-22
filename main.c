@@ -406,7 +406,8 @@ int deallocate_clusters(struct cluster_t *arr, int n)
 {
     for (int i = 0; i < n; i++)
     {
-        free(arr[i].obj);
+        if (arr[i].obj != NULL)
+            free(arr[i].obj);
     }
     free(arr);
     return 0;
@@ -423,7 +424,7 @@ int main(int argc, char *argv[])
         return -check_code;
     int current_cluster_amount = load_clusters(filename, &clusters);
     if (current_cluster_amount < 0) {
-        deallocate_clusters(clusters, current_cluster_amount);
+        deallocate_clusters(clusters, cluster_amount);
         return -current_cluster_amount;
     }
     while (cluster_amount < current_cluster_amount)
