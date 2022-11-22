@@ -309,8 +309,26 @@ int load_clusters(char *filename, struct cluster_t **arr)
     }
     char buffer[101];
     fgets(buffer, 100, file);
-    char *endPt = strchr(buffer, '=');
-    int count = strtol(endPt+1, NULL, 10);
+    *strchr(buffer, '\n') = '\0';
+    char *endPt = NULL;
+    endPt = strchr(buffer, '=');
+    if (endPt == NULL)
+    {
+        fprintf(stderr, "Error: File %s is not in the correct format.\n", filename);
+        return -ERR_INPUT_FILE;
+    }
+    int count = strtol(endPt+1, &endPt, 10);
+    dfmt("count: %c", *endPt);
+    if (count <= 0)
+    {
+        fprintf(stderr, "Error: File %s is not in the correct format.\n", filename);
+        return -ERR_INPUT_FILE;
+    }
+    if (*endPt != '\0')
+    {
+        fprintf(stderr, "Error: File %s is not in the correct format.\n", filename);
+        return -ERR_INPUT_FILE;
+    }
     *arr = (struct cluster_t *) calloc(count, sizeof(struct cluster_t));
     int i = 0;
     while (fgets(buffer, 100, file) != NULL && i < count)
