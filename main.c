@@ -50,6 +50,12 @@
 #define ERR_INPUT_OBJECTS 103
 #define ERR_INPUT_PARAMS 104
 
+int err_exit(int code, char *msg)
+{
+    fprintf(stderr, "%s", msg);
+    return -code;
+}
+
 /*****************************************************************
  * Deklarace potrebnych datovych typu:
  *
@@ -313,31 +319,18 @@ int load_clusters(char *filename, struct cluster_t **arr)
 
     FILE *file = fopen(filename, "r");
     if (file == NULL)
-    {
-        fprintf(stderr, "Error: File %s could not be opened.\n", filename);
-        return -ERR_INPUT_FILE;
-    }
+        return err_exit(ERR_INPUT_FILE, "Error: File could not be opened.\n");
     char buffer[102];
     fgets(buffer, 102, file);
     char *endPt = NULL;
     endPt = strchr(buffer, '=');
     if (endPt == NULL)
-    {
-        fprintf(stderr, "Error: File %s is not in the correct format. First line should be count=N\n", filename);
-        return -ERR_INPUT_FILE;
-    }
+        return err_exit(ERR_INPUT_FILE, "Error: File is not in the correct format. First line should be count=N\n");
     int count = strtol(endPt+1, &endPt, 10);
-    dfmt("count: %c", *endPt);
     if (count <= 0)
-    {
-        fprintf(stderr, "Error: File %s is not in the correct format. Count < 0\n", filename);
-        return -ERR_INPUT_FILE;
-    }
+        return err_exit(ERR_INPUT_FILE, "Error: File is not in the correct format. Count < 0\n");
     if (*endPt != '\0' && *endPt != '\n')
-    {
-        fprintf(stderr, "Error: File %s is not in the correct format. Sth is after count=N \n", filename);
-        return -ERR_INPUT_FILE;
-    }
+        return err_exit(ERR_INPUT_FILE, "Error: File is not in the correct format. Sth is after count=N\n");
     *arr = (struct cluster_t *) calloc(count, sizeof(struct cluster_t));
     int i = 0;
     while (fgets(buffer, 100, file) != NULL && i < count)
@@ -348,30 +341,18 @@ int load_clusters(char *filename, struct cluster_t **arr)
         x = (float) strtol(endPt, &endPt, 10);
         y = (float) strtol(endPt, &endPt, 10);
         if (id < 0 || x < 0 || y < 0 || x > 1000 || y > 1000)
-        {
-            fprintf(stderr, "Error: File %s is not in the correct format. OBJ params are out of range.\n", filename);
-            return -ERR_INPUT_FILE;
-        }
+            return err_exit(ERR_INPUT_FILE, "Error: File is not in the correct format. OBJ params are out of range.\n");
         if (*endPt != '\0' && *endPt != '\n')
-        {
-            fprintf(stderr, "Error: File %s is not in the correct format. Sth is after OBJ in line\n", filename);
-            return -ERR_INPUT_FILE;
-        }
+            return err_exit(ERR_INPUT_FILE, "Error: File is not in the correct format. Sth is after OBJ in line\n");
         if (!check_unique_id(*arr, i, id))
-        {
-            fprintf(stderr, "Error: File %s is not in the correct format. OBJ ID is not unique.\n", filename);
-            return -ERR_INPUT_FILE;
-        }
+            return err_exit(ERR_INPUT_FILE, "Error: File is not in the correct format. OBJ ID is not unique.\n");
         struct obj_t obj = {id, x, y};
         init_cluster(&(*arr)[i], 1);
         append_cluster(&(*arr)[i], obj);
         i++;
     }
     if (i < count)
-    {
-        fprintf(stderr, "Error: File %s does not contain enough objects.\n", filename);
-        return -ERR_INPUT_OBJECTS;
-    }
+        return err_exit(ERR_INPUT_FILE, "Error: File is not in the correct format. Not enough objects.\n");
     fclose(file);
     return count;
 }
@@ -394,24 +375,21 @@ void print_clusters(struct cluster_t *carr, int narr)
 /*
  Parsuje argumenty aplikace.
  */
-int parse_args(int argc, char *argv[], int *n, char **filename) {
+int parse_args(int argc, char *argv[], int *n, char **filename)
+{
     char *endPt = NULL;
     if (argc > 1)
         *filename = argv[1];
     if (argc == 2)
         *n = 1;
-    else if (argc == 3) {
+    else if (argc == 3)
+    {
         *n = strtol(argv[2], &endPt, 10);
-        if (*endPt != '\0') {
-            fprintf(stderr, "Error: Invalid N argument.\n");
-            return -ERR_INPUT_PARAMS;
-        }
+        if (*endPt != '\0' || *n < 1)
+            return err_exit(ERR_ARGS, "Error: Invalid N argument.\n");
     }
     else
-    {
-        fprintf(stderr, "Error: Invalid arguments");
-        return -ERR_ARGS;
-    }
+        return err_exit(ERR_ARGS, "Error: Invalid arguments");
     return 0;
 }
 
@@ -427,7 +405,8 @@ int main(int argc, char *argv[])
     int current_cluster_amount = load_clusters(filename, &clusters);
     if (current_cluster_amount < 0)
         return -current_cluster_amount;
-    while (cluster_amount < current_cluster_amount) {
+    while (cluster_amount < current_cluster_amount)
+    {
         int c1, c2;
         find_neighbours(clusters, current_cluster_amount, &c1, &c2);
         merge_clusters(&clusters[c1], &clusters[c2]);
