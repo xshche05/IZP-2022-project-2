@@ -290,6 +290,16 @@ void print_cluster(struct cluster_t *c)
     putchar('\n');
 }
 
+int check_unique_id(struct cluster_t *arr, int size, int id)
+{
+    for (int i = 0; i < size; i++) {
+        if (arr[i].obj->id == id) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 /*
  Ze souboru 'filename' nacte objekty. Pro kazdy objekt vytvori shluk a ulozi
  jej do pole shluku. Alokuje prostor pro pole vsech shluku a ukazatel na prvni
@@ -345,6 +355,11 @@ int load_clusters(char *filename, struct cluster_t **arr)
         if (*endPt != '\0' && *endPt != '\n')
         {
             fprintf(stderr, "Error: File %s is not in the correct format. Sth is after OBJ in line\n", filename);
+            return -ERR_INPUT_FILE;
+        }
+        if (!check_unique_id(*arr, i, id))
+        {
+            fprintf(stderr, "Error: File %s is not in the correct format. OBJ ID is not unique.\n", filename);
             return -ERR_INPUT_FILE;
         }
         struct obj_t obj = {id, x, y};
