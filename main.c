@@ -45,10 +45,9 @@
  * Error codes
  */
 
-#define ERR_ARGS 101
+#define ERR_INPUT_ARGS 101
 #define ERR_INPUT_FILE 102
 #define ERR_INPUT_OBJECTS 103
-#define ERR_INPUT_PARAMS 104
 
 int err_exit(int code, char *msg)
 {
@@ -356,15 +355,15 @@ int load_clusters(char *filename, struct cluster_t **arr)
         x = (float) strtol(endPt, &endPt, 10);
         y = (float) strtol(endPt, &endPt, 10);
         if (id < 0 || x < 0 || y < 0 || x > 1000 || y > 1000) {
-            check = err_exit(ERR_INPUT_FILE, "Error: File is not in the correct format. OBJ params are out of range.\n");
+            check = err_exit(ERR_INPUT_OBJECTS, "Error: File is not in the correct format. OBJ params are out of range.\n");
             break;
         }
         if (*endPt != '\0' && *endPt != '\n') {
-            check = err_exit(ERR_INPUT_FILE, "Error: File is not in the correct format. Sth is after OBJ in line\n");
+            check = err_exit(ERR_INPUT_OBJECTS, "Error: File is not in the correct format. Sth is after OBJ in line\n");
             break;
         }
         if (!check_unique_id(*arr, i, id)) {
-            check = err_exit(ERR_INPUT_FILE, "Error: File is not in the correct format. OBJ ID is not unique.\n");
+            check = err_exit(ERR_INPUT_OBJECTS, "Error: File is not in the correct format. OBJ ID is not unique.\n");
             break;
         }
         struct obj_t obj = {id, x, y};
@@ -374,7 +373,7 @@ int load_clusters(char *filename, struct cluster_t **arr)
     }
     fclose(file);
     if (i < count)
-        check = err_exit(ERR_INPUT_FILE, "Error: File is not in the correct format. Not enough objects.\n");
+        check = err_exit(ERR_INPUT_OBJECTS, "Error: File is not in the correct format. Not enough objects.\n");
     if (check == 0)
         return count;
     else
@@ -412,10 +411,10 @@ int parse_args(int argc, char *argv[], int *n, char **filename)
     {
         *n = strtol(argv[2], &endPt, 10);
         if (*endPt != '\0' || *n < 1)
-            return err_exit(ERR_ARGS, "Error: Invalid N argument.\n");
+            return err_exit(ERR_INPUT_ARGS, "Error: Invalid N argument.\n");
     }
     else
-        return err_exit(ERR_ARGS, "Error: Invalid arguments");
+        return err_exit(ERR_INPUT_ARGS, "Error: Invalid arguments");
     return 0;
 }
 
