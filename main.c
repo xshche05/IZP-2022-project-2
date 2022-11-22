@@ -360,7 +360,7 @@ int load_clusters(char *filename, struct cluster_t **arr)
         i++;
     }
     if (i < count) {
-        return err_exit_f(ERR_INPUT_FILE, "Error: File is not in the correct format. Not enough objects.\n", file);
+        return err_exit_f(ERR_INPUT_OBJECTS, "Error: File is not in the correct format. Not enough objects.\n", file);
     }
     fclose(file);
     return count;
@@ -401,15 +401,16 @@ int parse_args(int argc, char *argv[], int *n, char **filename)
     return 0;
 }
 
-int deallocate_clusters(struct cluster_t *arr, int n)
+void deallocate_clusters(struct cluster_t *arr, int n)
 {
+    if (arr == NULL)
+        return;
     for (int i = 0; i < n; i++)
     {
         if (arr[i].obj != NULL)
             free(arr[i].obj);
     }
     free(arr);
-    return 0;
 }
 
 int main(int argc, char *argv[])
