@@ -48,6 +48,7 @@
 #define ERR_ARGS 101
 #define ERR_INPUT_FILE 102
 #define ERR_INPUT_OBJECTS 103
+#define ERR_INPUT_PARAMS 104
 
 /*****************************************************************
  * Deklarace potrebnych datovych typu:
@@ -356,8 +357,13 @@ int parse_args(int argc, char *argv[], int *n, char **filename) {
         *filename = argv[1];
     if (argc == 2)
         *n = 1;
-    else if (argc == 3)
-        *n = strtol(argv[2], NULL, 10); // dostaneme pocet objektu
+    else if (argc == 3) {
+        int code = sscanf(argv[2], "%d", n); // dostaneme pocet objektu
+        if (code != 1 || *n < 1) {
+            fprintf(stderr, "Error: Invalid number of clusters.\n");
+            return -ERR_INPUT_PARAMS;
+        }
+    }
     else
     {
         fprintf(stderr, "Error: Invalid arguments");
