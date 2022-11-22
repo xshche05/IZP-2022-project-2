@@ -327,7 +327,6 @@ int load_clusters(char *filename, struct cluster_t **arr)
 
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
-        fclose(file);
         return err_exit(ERR_INPUT_FILE, "Error: File could not be opened.\n");
     }
     char buffer[102];
