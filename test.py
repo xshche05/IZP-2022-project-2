@@ -324,7 +324,8 @@ class Tester:
             out += "\n"
 
         out = out[:-1]
-        return out + "\n"
+        print(out)
+        return out
 
     def save_logs(self) -> None:
         with open(TEST_LOG_FILENAME, "w", encoding="utf8") as f:
