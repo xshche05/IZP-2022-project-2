@@ -360,7 +360,6 @@ int load_clusters(char *filename, struct cluster_t **arr)
         i++;
     }
     if (i < count) {
-        printf("%d < %d\n", i, count);
         return err_exit_f(ERR_INPUT_FILE, "Error: File is not in the correct format. Not enough objects.\n", file);
     }
     fclose(file);
