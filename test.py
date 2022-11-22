@@ -324,7 +324,7 @@ class Tester:
             out += "\n"
 
         out = out[:-1]
-        print(out)
+        out += "\n"
         return out
 
     def save_logs(self) -> None:
