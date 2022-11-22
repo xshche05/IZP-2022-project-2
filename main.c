@@ -307,10 +307,10 @@ int check_unique_id(struct cluster_t *arr, int size, int id)
     return 1;
 }
 
-void deallocate_clusters(struct cluster_t **arr, int n)
+void deallocate_clusters(struct cluster_t *arr, int n)
 {
     for (int i = 0; i < n; i++)
-        free(arr[i]->obj);
+        free(arr[i].obj);
     free(arr);
 }
 
@@ -384,7 +384,7 @@ int load_clusters(char *filename, struct cluster_t **arr)
         return count;
     else
     {
-        deallocate_clusters(&(*arr), i);
+        deallocate_clusters((*arr), i);
         return check;
     }
 }
@@ -445,6 +445,6 @@ int main(int argc, char *argv[])
         current_cluster_amount = remove_cluster(clusters, current_cluster_amount, c2);
     }
     print_clusters(clusters, current_cluster_amount);
-    deallocate_clusters(&clusters, current_cluster_amount);
+    deallocate_clusters(clusters, current_cluster_amount);
     return 0;
 }
