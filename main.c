@@ -307,6 +307,13 @@ int check_unique_id(struct cluster_t *arr, int size, int id)
     return 1;
 }
 
+void deallocate_clusters(struct cluster_t **arr, int n)
+{
+    for (int i = 0; i < n; i++)
+        free(arr[i]->obj);
+    free(arr);
+}
+
 /*
  Ze souboru 'filename' nacte objekty. Pro kazdy objekt vytvori shluk a ulozi
  jej do pole shluku. Alokuje prostor pro pole vsech shluku a ukazatel na prvni
@@ -319,21 +326,30 @@ int load_clusters(char *filename, struct cluster_t **arr)
     assert(arr != NULL);
 
     FILE *file = fopen(filename, "r");
-    if (file == NULL)
+    if (file == NULL) {
+        fclose(file);
         return err_exit(ERR_INPUT_FILE, "Error: File could not be opened.\n");
+    }
     char buffer[102];
     fgets(buffer, 102, file);
     char *endPt = NULL;
     endPt = strchr(buffer, '=');
-    if (endPt == NULL)
+    if (endPt == NULL) {
+        fclose(file);
         return err_exit(ERR_INPUT_FILE, "Error: File is not in the correct format. First line should be count=N\n");
+    }
     int count = strtol(endPt+1, &endPt, 10);
-    if (count <= 0)
+    if (count <= 0) {
+        fclose(file);
         return err_exit(ERR_INPUT_FILE, "Error: File is not in the correct format. Count < 0\n");
-    if (*endPt != '\0' && *endPt != '\n')
+    }
+    if (*endPt != '\0' && *endPt != '\n') {
+        fclose(file);
         return err_exit(ERR_INPUT_FILE, "Error: File is not in the correct format. Sth is after count=N\n");
+    }
     *arr = (struct cluster_t *) calloc(count, sizeof(struct cluster_t));
     int i = 0;
+    int check = 0;
     while (fgets(buffer, 100, file) != NULL && i < count)
     {
         int id;
@@ -341,21 +357,36 @@ int load_clusters(char *filename, struct cluster_t **arr)
         id = strtol(buffer, &endPt, 10);
         x = (float) strtol(endPt, &endPt, 10);
         y = (float) strtol(endPt, &endPt, 10);
-        if (id < 0 || x < 0 || y < 0 || x > 1000 || y > 1000)
-            return err_exit(ERR_INPUT_FILE, "Error: File is not in the correct format. OBJ params are out of range.\n");
-        if (*endPt != '\0' && *endPt != '\n')
-            return err_exit(ERR_INPUT_FILE, "Error: File is not in the correct format. Sth is after OBJ in line\n");
-        if (!check_unique_id(*arr, i, id))
-            return err_exit(ERR_INPUT_FILE, "Error: File is not in the correct format. OBJ ID is not unique.\n");
+        if (id < 0 || x < 0 || y < 0 || x > 1000 || y > 1000) {
+            fclose(file);
+            check = err_exit(ERR_INPUT_FILE, "Error: File is not in the correct format. OBJ params are out of range.\n");
+            break;
+        }
+        if (*endPt != '\0' && *endPt != '\n') {
+            fclose(file);
+            check = err_exit(ERR_INPUT_FILE, "Error: File is not in the correct format. Sth is after OBJ in line\n");
+            break;
+        }
+        if (!check_unique_id(*arr, i, id)) {
+            fclose(file);
+            check = err_exit(ERR_INPUT_FILE, "Error: File is not in the correct format. OBJ ID is not unique.\n");
+            break;
+        }
         struct obj_t obj = {id, x, y};
         init_cluster(&(*arr)[i], 1);
         append_cluster(&(*arr)[i], obj);
         i++;
     }
-    if (i < count)
-        return err_exit(ERR_INPUT_FILE, "Error: File is not in the correct format. Not enough objects.\n");
     fclose(file);
-    return count;
+    if (i < count)
+        check = err_exit(ERR_INPUT_FILE, "Error: File is not in the correct format. Not enough objects.\n");
+    if (check == 0)
+        return count;
+    else
+    {
+        deallocate_clusters(&(*arr), i);
+        return check;
+    }
 }
 
 /*
@@ -393,13 +424,6 @@ int parse_args(int argc, char *argv[], int *n, char **filename)
     return 0;
 }
 
-void deallocate_clusters(struct cluster_t *arr, int n)
-{
-    for (int i = 0; i < n; i++)
-        free(arr[i].obj);
-    free(arr);
-}
-
 int main(int argc, char *argv[])
 {
     struct cluster_t *clusters = NULL;
@@ -421,6 +445,6 @@ int main(int argc, char *argv[])
         current_cluster_amount = remove_cluster(clusters, current_cluster_amount, c2);
     }
     print_clusters(clusters, current_cluster_amount);
-    deallocate_clusters(clusters, current_cluster_amount);
+    deallocate_clusters(&clusters, current_cluster_amount);
     return 0;
 }
