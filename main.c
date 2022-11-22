@@ -368,12 +368,12 @@ int parse_args(int argc, char *argv[], int *n, char **filename) {
 
 int main(int argc, char *argv[])
 {
-    struct cluster_t *clusters;
+    struct cluster_t *clusters = NULL;
+    char *filename = NULL;
     int cluster_amount;
-    char *filename;
     int check_code;
     check_code = parse_args(argc, argv, &cluster_amount, &filename);
-    if (check_code < 0)
+    if (check_code != 0)
         return -check_code;
     int current_cluster_amount = load_clusters(filename, &clusters);
     if (current_cluster_amount < 0)
