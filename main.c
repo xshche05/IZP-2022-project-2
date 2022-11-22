@@ -353,14 +353,15 @@ void print_clusters(struct cluster_t *carr, int narr)
  Parsuje argumenty aplikace.
  */
 int parse_args(int argc, char *argv[], int *n, char **filename) {
+    char *endPt = NULL;
     if (argc > 1)
         *filename = argv[1];
     if (argc == 2)
         *n = 1;
     else if (argc == 3) {
-        int code = sscanf(argv[2], "%d", n); // dostaneme pocet objektu
-        if (code != 1 || *n < 1) {
-            fprintf(stderr, "Error: Invalid number of clusters.\n");
+        *n = strtol(argv[2], &endPt, 10);
+        if (*endPt != '\0') {
+            fprintf(stderr, "Error: Invalid N argument.\n");
             return -ERR_INPUT_PARAMS;
         }
     }
