@@ -307,14 +307,13 @@ int load_clusters(char *filename, struct cluster_t **arr)
         fprintf(stderr, "Error: File %s could not be opened.\n", filename);
         return -ERR_INPUT_FILE;
     }
-    char buffer[101];
-    fgets(buffer, 100, file);
-    *strchr(buffer, '\n') = '\0';
+    char buffer[102];
+    fgets(buffer, 102, file);
     char *endPt = NULL;
     endPt = strchr(buffer, '=');
     if (endPt == NULL)
     {
-        fprintf(stderr, "Error: File %s is not in the correct format.\n", filename);
+        fprintf(stderr, "Error: File %s is not in the correct format. First line should be count=N\n", filename);
         return -ERR_INPUT_FILE;
     }
     int count = strtol(endPt+1, &endPt, 10);
@@ -337,7 +336,7 @@ int load_clusters(char *filename, struct cluster_t **arr)
         float x, y;
         id = strtol(buffer, &endPt, 10);
         x = (float) strtol(endPt, &endPt, 10);
-        y = (float) strtol(endPt, NULL, 10);
+        y = (float) strtol(endPt, &endPt, 10);
         struct obj_t obj = {id, x, y};
         init_cluster(&(*arr)[i], 1);
         append_cluster(&(*arr)[i], obj);
