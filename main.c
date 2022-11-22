@@ -310,7 +310,7 @@ int check_unique_id(struct cluster_t *arr, int size, int id)
 void deallocate_clusters(struct cluster_t *arr, int n)
 {
     for (int i = 0; i < n; i++)
-        free(arr[i].obj);
+        clear_cluster(&arr[i]);
     free(arr);
 }
 
