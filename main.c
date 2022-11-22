@@ -320,12 +320,12 @@ int load_clusters(char *filename, struct cluster_t **arr)
     dfmt("count: %c", *endPt);
     if (count <= 0)
     {
-        fprintf(stderr, "Error: File %s is not in the correct format.\n", filename);
+        fprintf(stderr, "Error: File %s is not in the correct format. Count < 0\n", filename);
         return -ERR_INPUT_FILE;
     }
-    if (*endPt != '\0')
+    if (*endPt != '\0' && *endPt != '\n')
     {
-        fprintf(stderr, "Error: File %s is not in the correct format.\n", filename);
+        fprintf(stderr, "Error: File %s is not in the correct format. Sth is after count=N \n", filename);
         return -ERR_INPUT_FILE;
     }
     *arr = (struct cluster_t *) calloc(count, sizeof(struct cluster_t));
