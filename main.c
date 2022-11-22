@@ -369,7 +369,6 @@ void print_clusters(struct cluster_t *carr, int narr)
     {
         printf("cluster %d: ", i);
         print_cluster(&carr[i]);
-        free(carr[i].obj);
     }
 }
 
@@ -394,6 +393,13 @@ int parse_args(int argc, char *argv[], int *n, char **filename)
     return 0;
 }
 
+void deallocate_clusters(struct cluster_t *arr, int n)
+{
+    for (int i = 0; i < n; i++)
+        free(arr[i].obj);
+    free(arr);
+}
+
 int main(int argc, char *argv[])
 {
     struct cluster_t *clusters = NULL;
@@ -415,6 +421,6 @@ int main(int argc, char *argv[])
         current_cluster_amount = remove_cluster(clusters, current_cluster_amount, c2);
     }
     print_clusters(clusters, current_cluster_amount);
-    free(clusters);
+    deallocate_clusters(clusters, current_cluster_amount);
     return 0;
 }
