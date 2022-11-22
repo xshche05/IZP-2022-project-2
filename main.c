@@ -382,6 +382,7 @@ int main(int argc, char *argv[])
         int c1, c2;
         find_neighbours(clusters, current_cluster_amount, &c1, &c2);
         merge_clusters(&clusters[c1], &clusters[c2]);
+        sort_cluster(&clusters[c1]);
         current_cluster_amount = remove_cluster(clusters, current_cluster_amount, c2);
     }
     print_clusters(clusters, current_cluster_amount);
