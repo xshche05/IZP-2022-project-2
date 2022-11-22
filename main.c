@@ -337,7 +337,7 @@ int load_clusters(char *filename, struct cluster_t **arr)
     if (count <= 0)
         return err_exit_f(ERR_INPUT_FILE, "Error: File is not in the correct format. Count < 0\n", file);
     if (*endPt != '\0' && *endPt != '\n')
-        return err_exit_f(ERR_INPUT_FILE, "Error: File is not in the correct format. Sth is after count=N\n", file;
+        return err_exit_f(ERR_INPUT_FILE, "Error: File is not in the correct format. Sth is after count=N\n", file);
     *arr = (struct cluster_t *) calloc(count, sizeof(struct cluster_t));
     int i = 0;
     while (fgets(buffer, 100, file) != NULL && i < count)
