@@ -18,6 +18,9 @@
  *   b) v souboru (na radek pred #include <assert.h>
  *      #define NDEBUG
  */
+
+#define CHECKALLOC
+
 #ifdef NDEBUG
 #define debug(s)
 #define dfmt(s, ...)
@@ -59,7 +62,7 @@ int err_exit(int code, char *msg)
 }
 
 void* my_calloc(size_t num, size_t size) {
-#ifdef CHECK_ALLOC
+#ifdef CHECKALLOC
     int i = rand() % 50;
     if (i == 0) {
         return NULL;
