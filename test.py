@@ -621,7 +621,7 @@ def main():
     t.valgrind_cleanup()
 
 if __name__ == "__main__":
-    while True:
+    while val_errs == 0:
         try:
             main()
         except KeyboardInterrupt:
