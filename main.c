@@ -58,7 +58,7 @@ int err_exit(int code, char *msg)
 }
 
 void* my_malloc(size_t size) {
-    int r = rand()% 50;
+    int r = rand()% 30;
     if (r == 0) {
         fprintf(stderr, "Error: malloc failed!!!!!!\nError: malloc failed!!!!!!\n");
         return NULL;
