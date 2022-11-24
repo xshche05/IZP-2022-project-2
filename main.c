@@ -9,7 +9,6 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <math.h> // sqrtf
-#include <limits.h> // INT_MAX
 #include <string.h>
 
 /*****************************************************************
@@ -48,11 +47,28 @@
 #define ERR_INPUT_ARGS 101
 #define ERR_INPUT_FILE 102
 #define ERR_INPUT_OBJECTS 103
+#define ERR_NULL_POINTER 104
+#define ERR_ALLOC 105
+#define ERR_FUNC_ARG 106
+#define ERR_INTERNAL 1
 
 int err_exit(int code, char *msg)
 {
-    fprintf(stderr, "%s", msg);
+    fprintf(stderr, "%s\n", msg);
     return -code;
+}
+
+void* my_calloc(size_t num, size_t size) {
+#ifdef CHECK_ALLOC
+    int i = rand() % 50;
+    if (i == 0) {
+        return NULL;
+    }
+#endif
+    void *ptr = calloc(num, size);
+    if (ptr == NULL)
+        err_exit(ERR_ALLOC, "Error: calloc() failed");
+    return ptr;
 }
 
 /*****************************************************************
@@ -93,30 +109,40 @@ struct cluster_t {
  Inicializace shluku 'c'. Alokuje pamet pro cap objektu (kapacitu).
  Ukazatel NULL u pole objektu znamena kapacitu 0.
 */
-void init_cluster(struct cluster_t *c, int cap) {
+int init_cluster(struct cluster_t *c, int cap) {
+    if (c == NULL)
+        return err_exit(ERR_NULL_POINTER, "Error: pointer is NULL");
     assert(c != NULL);
+    if (cap < 0)
+        return err_exit(ERR_FUNC_ARG, "Error: Function argument isnt acceptable");
     assert(cap >= 0);
     if (c->obj == NULL && cap == 0) {
         c->capacity = 0;
         c->obj = NULL;
     } else {
         c->capacity = cap;
-        c->obj = malloc(c->capacity * sizeof(struct obj_t));
+        c->obj = my_calloc(c->capacity, sizeof(struct obj_t));
+        if (c->obj == NULL)
+            return err_exit(ERR_ALLOC, "Error: calloc() failed");
     }
     c->size = 0;
+    return 0;
 }
 
 /*
  Odstraneni vsech objektu shluku a inicializace na prazdny shluk.
  */
-void clear_cluster(struct cluster_t *c)
+int clear_cluster(struct cluster_t *c)
 {
+    if (c == NULL) {
+        return err_exit(ERR_NULL_POINTER, "Error: pointer is NULL");
+    }
     assert(c != NULL);
     c->size = 0;
     c->capacity = 0;
     free(c->obj);
     c->obj = NULL;
-    init_cluster(c, c->capacity);
+    return init_cluster(c, c->capacity);
 }
 
 /// Chunk of cluster objects. Value recommended for reallocation.
@@ -150,14 +176,17 @@ struct cluster_t *resize_cluster(struct cluster_t *c, int new_cap)
  Prida objekt 'obj' na konec shluku 'c'. Rozsiri shluk, pokud se do nej objekt
  nevejde.
  */
-void append_cluster(struct cluster_t *c, struct obj_t obj)
+int append_cluster(struct cluster_t *c, struct obj_t obj)
 {
+    if (c == NULL)
+        return err_exit(ERR_NULL_POINTER, "Error: pointer is NULL");
     assert(c != NULL);
-    if (c->size >= c->capacity) {
-        resize_cluster(c, c->capacity + CLUSTER_CHUNK);
-    }
+    if (c->size >= c->capacity)
+        if (resize_cluster(c, c->capacity + CLUSTER_CHUNK) == NULL)
+            return err_exit(ERR_ALLOC, "Error: Reallocation failed");
     c->obj[c->size] = obj;
     c->size++;
+    return 0;
 }
 
 /*
@@ -170,15 +199,19 @@ void sort_cluster(struct cluster_t *c);
  Objekty ve shluku 'c1' budou serazeny vzestupne podle identifikacniho cisla.
  Shluk 'c2' bude nezmenen.
  */
-void merge_clusters(struct cluster_t *c1, struct cluster_t *c2)
+int merge_clusters(struct cluster_t *c1, struct cluster_t *c2)
 {
+    if (c1 == NULL || c2 == NULL)
+        return err_exit(ERR_NULL_POINTER, "Error: pointer is NULL");
     assert(c1 != NULL);
     assert(c2 != NULL);
 
     sort_cluster(c1);
     for (int i = 0; i < c2->size; i++) {
-        append_cluster(c1, c2->obj[i]);
+        if (append_cluster(c1, c2->obj[i]) != 0)
+            return err_exit(ERR_INTERNAL, "Error: Internal error");
     }
+    return 0;
 }
 
 /**********************************************************************/
@@ -191,9 +224,12 @@ void merge_clusters(struct cluster_t *c1, struct cluster_t *c2)
 */
 int remove_cluster(struct cluster_t *carr, int narr, int idx)
 {
+    if (idx >= narr || idx < 0 || narr < 0)
+        return err_exit(ERR_FUNC_ARG, "Error: Function argument isnt acceptable");
     assert(idx < narr);
     assert(narr > 0);
-    clear_cluster(&carr[idx]);
+    if (clear_cluster(&carr[idx]) != 0)
+        return err_exit(ERR_INTERNAL, "Error: Internal error");
     for (int i = idx; i < narr - 1; i++) {
         carr[i] = carr[i + 1];
     }
@@ -244,8 +280,10 @@ float cluster_distance(struct cluster_t *c1, struct cluster_t *c2)
  'carr'. Funkce nalezene shluky (indexy do pole 'carr') uklada do pameti na
  adresu 'c1' resp. 'c2'.
 */
-void find_neighbours(struct cluster_t *carr, int narr, int *c1, int *c2)
+int find_neighbours(struct cluster_t *carr, int narr, int *c1, int *c2)
 {
+    if (narr <= 0)
+        return err_exit(ERR_FUNC_ARG, "Error: Function argument isnt acceptable");
     assert(narr > 0);
 
     float min = INFINITY;
@@ -259,6 +297,7 @@ void find_neighbours(struct cluster_t *carr, int narr, int *c1, int *c2)
             }
         }
     }
+    return 0;
 }
 
 // pomocna funkce pro razeni shluku
@@ -321,11 +360,13 @@ void deallocate_clusters(struct cluster_t *arr, int n)
 */
 int load_clusters(char *filename, struct cluster_t **arr)
 {
+    if (arr == NULL)
+        return err_exit(ERR_NULL_POINTER, "Error: Pointer is NULL");
     assert(arr != NULL);
 
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
-        return err_exit(ERR_INPUT_FILE, "Error: File could not be opened.\n");
+        return err_exit(ERR_INPUT_FILE, "Error: File could not be opened.");
     }
     char buffer[102];
     fgets(buffer, 102, file);
@@ -333,20 +374,19 @@ int load_clusters(char *filename, struct cluster_t **arr)
     endPt = strchr(buffer, '=');
     if (endPt == NULL) {
         fclose(file);
-        return err_exit(ERR_INPUT_FILE, "Error: File is not in the correct format. First line should be count=N\n");
+        return err_exit(ERR_INPUT_FILE, "Error: File is not in the correct format. First line should be count=N");
     }
     int count = strtol(endPt+1, &endPt, 10);
     if (count <= 0) {
         fclose(file);
-        return err_exit(ERR_INPUT_FILE, "Error: File is not in the correct format. Count < 0\n");
+        return err_exit(ERR_INPUT_FILE, "Error: File is not in the correct format. Count < 0");
     }
     if (*endPt != '\0' && *endPt != '\n') {
         fclose(file);
-        return err_exit(ERR_INPUT_FILE, "Error: File is not in the correct format. Sth is after count=N\n");
+        return err_exit(ERR_INPUT_FILE, "Error: File is not in the correct format. Sth is after count=N");
     }
-    *arr = (struct cluster_t *) calloc(count, sizeof(struct cluster_t));
+    *arr = my_calloc(count, sizeof(struct cluster_t));
     int i = 0;
-    int check = 0;
     while (fgets(buffer, 100, file) != NULL && i < count)
     {
         int id;
@@ -355,32 +395,34 @@ int load_clusters(char *filename, struct cluster_t **arr)
         x = (float) strtol(endPt, &endPt, 10);
         y = (float) strtol(endPt, &endPt, 10);
         if (id < 0 || x < 0 || y < 0 || x > 1000 || y > 1000) {
-            check = err_exit(ERR_INPUT_OBJECTS, "Error: File is not in the correct format. OBJ params are out of range.\n");
-            break;
+            deallocate_clusters((*arr), i);
+            return err_exit(ERR_INPUT_OBJECTS, "Error: File is not in the correct format. OBJ params are out of range.");
         }
         if (*endPt != '\0' && *endPt != '\n') {
-            check = err_exit(ERR_INPUT_OBJECTS, "Error: File is not in the correct format. Sth is after OBJ in line\n");
-            break;
+            deallocate_clusters((*arr), i);
+            return err_exit(ERR_INPUT_OBJECTS, "Error: File is not in the correct format. Sth is after OBJ in line");
         }
         if (!check_unique_id(*arr, i, id)) {
-            check = err_exit(ERR_INPUT_OBJECTS, "Error: File is not in the correct format. OBJ ID is not unique.\n");
-            break;
+            deallocate_clusters((*arr), i);
+            return err_exit(ERR_INPUT_OBJECTS, "Error: File is not in the correct format. OBJ ID is not unique.");
         }
         struct obj_t obj = {id, x, y};
-        init_cluster(&(*arr)[i], 1);
-        append_cluster(&(*arr)[i], obj);
+        if (init_cluster(&(*arr)[i], 1) != 0) {
+            deallocate_clusters((*arr), i);
+            return err_exit(ERR_INTERNAL, "Error: Internal error");
+        }
+        if (append_cluster(&(*arr)[i], obj) != 0) {
+            deallocate_clusters((*arr), i);
+            return err_exit(ERR_INTERNAL, "Error: Internal error");
+        }
         i++;
     }
     fclose(file);
-    if (i < count)
-        check = err_exit(ERR_INPUT_OBJECTS, "Error: File is not in the correct format. Not enough objects.\n");
-    if (check == 0)
-        return count;
-    else
-    {
+    if (i < count) {
         deallocate_clusters((*arr), i);
-        return check;
+        return err_exit(ERR_INPUT_OBJECTS, "Error: File is not in the correct format. Not enough objects.");
     }
+    return count;
 }
 
 /*
@@ -389,7 +431,7 @@ int load_clusters(char *filename, struct cluster_t **arr)
 */
 void print_clusters(struct cluster_t *carr, int narr)
 {
-    printf("Clusters:\n");
+    printf("Clusters:");
     for (int i = 0; i < narr; i++)
     {
         printf("cluster %d: ", i);
@@ -411,7 +453,7 @@ int parse_args(int argc, char *argv[], int *n, char **filename)
     {
         *n = strtol(argv[2], &endPt, 10);
         if (*endPt != '\0' || *n < 1)
-            return err_exit(ERR_INPUT_ARGS, "Error: Invalid N argument.\n");
+            return err_exit(ERR_INPUT_ARGS, "Error: Invalid N argument.");
     }
     else
         return err_exit(ERR_INPUT_ARGS, "Error: Invalid arguments");
@@ -433,10 +475,20 @@ int main(int argc, char *argv[])
     while (cluster_amount < current_cluster_amount)
     {
         int c1, c2;
-        find_neighbours(clusters, current_cluster_amount, &c1, &c2);
-        merge_clusters(&clusters[c1], &clusters[c2]);
+        if (find_neighbours(clusters, current_cluster_amount, &c1, &c2) != 0) {
+            deallocate_clusters(clusters, current_cluster_amount);
+            return err_exit(ERR_INTERNAL, "Error: Internal error");
+        }
+        if (merge_clusters(&clusters[c1], &clusters[c2]) != 0) {
+            deallocate_clusters(clusters, current_cluster_amount);
+            return err_exit(ERR_INTERNAL, "Error: Internal error");
+        }
         sort_cluster(&clusters[c1]);
         current_cluster_amount = remove_cluster(clusters, current_cluster_amount, c2);
+        if (current_cluster_amount < 0) {
+            deallocate_clusters(clusters, current_cluster_amount);
+            return err_exit(ERR_INTERNAL, "Error: Internal error");
+        }
     }
     print_clusters(clusters, current_cluster_amount);
     deallocate_clusters(clusters, current_cluster_amount);
