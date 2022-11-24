@@ -69,8 +69,6 @@ void* my_calloc(size_t num, size_t size) {
     }
 #endif
     void *ptr = calloc(num, size);
-    if (ptr == NULL)
-        err_exit(ERR_ALLOC, "Error: calloc() failed", __LINE__);
     return ptr;
 }
 
