@@ -115,9 +115,9 @@ struct cluster_t {
  Ukazatel NULL u pole objektu znamena kapacitu 0.
 */
 int init_cluster(struct cluster_t *c, int cap) {
-    if (c->obj == NULL && cap == 0) {
+    c->obj = NULL;
+    if (cap == 0) {
         c->capacity = 0;
-        c->obj = NULL;
     } else {
         c->capacity = cap;
         c->obj = my_malloc(c->capacity * sizeof(struct obj_t));
@@ -351,7 +351,7 @@ int load_clusters(char *filename, struct cluster_t **arr)
         fclose(file);
         return err_exit(ERR_INPUT_FILE, "Error: File is not in the correct format. Sth is after count=N\n");
     }
-    *arr = (struct cluster_t *) calloc(count, sizeof(struct cluster_t));
+    *arr = (struct cluster_t *) my_malloc(count * sizeof(struct cluster_t));
     int i = 0;
     int check = 1;
     while (fgets(buffer, 100, file) != NULL && i < count)
