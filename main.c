@@ -57,6 +57,8 @@ int err_exit(int code, char *msg)
 }
 
 void* my_malloc(size_t size) {
+    if (rand()% 2)
+        return NULL;
     void *ptr = malloc(size);
     return ptr;
 }
