@@ -27,7 +27,7 @@ BOLD = "\033[1m"
 END = "\033[0m"
 
 LOREM_IPSUM = "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."
-
+val_errs = 0
 BASE_INPUT = [
     ("40", "86", "663"),
     ("43", "747", "938"),
@@ -196,6 +196,8 @@ class Tester:
             print(self.debug(p.stderr))
 
             if valgrind_out:
+                global val_errs
+                val_errs += 1
                 print(f"{self.bold('Valgrind')}:")
                 print(self.debug(valgrind_out))
 
@@ -378,7 +380,7 @@ class Tester:
             return False
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(description="Tester 2. IZP projektu [2022]")
     parser.add_argument(
         "program_name",
@@ -617,3 +619,11 @@ if __name__ == "__main__":
 
     t.print_stats()
     t.valgrind_cleanup()
+
+if __name__ == "__main__":
+    while True:
+        try:
+            main()
+        except KeyboardInterrupt:
+            break
+    print(f"\n\n\n\n VALGRIND - {val_errs}\n\n\n\n")
