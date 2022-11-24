@@ -11,7 +11,6 @@
 #include <math.h> // sqrtf
 #include <limits.h> // INT_MAX
 #include <string.h>
-#include <time.h>
 
 /*****************************************************************
  * Ladici makra. Vypnout jejich efekt lze definici makra
@@ -49,39 +48,11 @@
 #define ERR_INPUT_ARGS 101
 #define ERR_INPUT_FILE 102
 #define ERR_INPUT_OBJECTS 103
-#define ERR_ALLOC 104
 
 int err_exit(int code, char *msg)
 {
     fprintf(stderr, "%s", msg);
     return -code;
-}
-
-void* my_malloc(size_t size) {
-    int r = rand()% 30;
-    if (r == 0) {
-        fprintf(stderr, "Error: malloc failed!!!!!!\nError: malloc failed!!!!!!\nSIZE %zu\n", size);
-        return NULL;
-    }
-    void *ptr = NULL;
-    ptr = malloc(size);
-    return ptr;
-}
-
-void* my_realloc(void *ptr, size_t size) {
-    void *new_ptr = NULL;
-    new_ptr = realloc(ptr, size);
-    return new_ptr;
-}
-
-void my_free(void *ptr) {
-    free(ptr);
-}
-
-void *my_calloc(int nmemb, size_t size) {
-    void *ptr = NULL;
-    ptr = calloc(nmemb, size);
-    return ptr;
 }
 
 /*****************************************************************
@@ -122,30 +93,30 @@ struct cluster_t {
  Inicializace shluku 'c'. Alokuje pamet pro cap objektu (kapacitu).
  Ukazatel NULL u pole objektu znamena kapacitu 0.
 */
-int init_cluster(struct cluster_t *c, int cap) {
-    c->obj = NULL;
-    if (cap == 0) {
+void init_cluster(struct cluster_t *c, int cap) {
+    assert(c != NULL);
+    assert(cap >= 0);
+    if (c->obj == NULL && cap == 0) {
         c->capacity = 0;
+        c->obj = NULL;
     } else {
         c->capacity = cap;
-        c->obj = my_malloc(c->capacity * sizeof(struct obj_t));
-        if (c->obj == NULL)
-            return err_exit(ERR_ALLOC, "Error: Allocation failed\n");
+        c->obj = malloc(c->capacity * sizeof(struct obj_t));
     }
     c->size = 0;
-    return 1;
 }
 
 /*
  Odstraneni vsech objektu shluku a inicializace na prazdny shluk.
  */
-int clear_cluster(struct cluster_t *c)
+void clear_cluster(struct cluster_t *c)
 {
+    assert(c != NULL);
     c->size = 0;
     c->capacity = 0;
-    my_free(c->obj);
+    free(c->obj);
     c->obj = NULL;
-    return init_cluster(c, c->capacity);
+    init_cluster(c, c->capacity);
 }
 
 /// Chunk of cluster objects. Value recommended for reallocation.
@@ -157,13 +128,16 @@ const int CLUSTER_CHUNK = 10;
 struct cluster_t *resize_cluster(struct cluster_t *c, int new_cap)
 {
     // TUTO FUNKCI NEMENTE
+    assert(c);
+    assert(c->capacity >= 0);
+    assert(new_cap >= 0);
 
     if (c->capacity >= new_cap)
         return c;
 
     size_t size = sizeof(struct obj_t) * new_cap;
 
-    void *arr = my_realloc(c->obj, size);
+    void *arr = realloc(c->obj, size);
     if (arr == NULL)
         return NULL;
 
@@ -176,15 +150,14 @@ struct cluster_t *resize_cluster(struct cluster_t *c, int new_cap)
  Prida objekt 'obj' na konec shluku 'c'. Rozsiri shluk, pokud se do nej objekt
  nevejde.
  */
-int append_cluster(struct cluster_t *c, struct obj_t obj)
+void append_cluster(struct cluster_t *c, struct obj_t obj)
 {
+    assert(c != NULL);
     if (c->size >= c->capacity) {
-        if (resize_cluster(c, c->capacity + CLUSTER_CHUNK) == NULL)
-            return err_exit(ERR_ALLOC, "Error: Allocation failed\n");
+        resize_cluster(c, c->capacity + CLUSTER_CHUNK);
     }
     c->obj[c->size] = obj;
     c->size++;
-    return 1;
 }
 
 /*
@@ -197,15 +170,15 @@ void sort_cluster(struct cluster_t *c);
  Objekty ve shluku 'c1' budou serazeny vzestupne podle identifikacniho cisla.
  Shluk 'c2' bude nezmenen.
  */
-int merge_clusters(struct cluster_t *c1, struct cluster_t *c2)
+void merge_clusters(struct cluster_t *c1, struct cluster_t *c2)
 {
+    assert(c1 != NULL);
+    assert(c2 != NULL);
+
     sort_cluster(c1);
     for (int i = 0; i < c2->size; i++) {
-        int code = append_cluster(c1, c2->obj[i]);
-        if (code != 1)
-            return code;
+        append_cluster(c1, c2->obj[i]);
     }
-    return 1;
 }
 
 /**********************************************************************/
@@ -218,9 +191,9 @@ int merge_clusters(struct cluster_t *c1, struct cluster_t *c2)
 */
 int remove_cluster(struct cluster_t *carr, int narr, int idx)
 {
-    int code = clear_cluster(&carr[idx]);
-    if (code != 1)
-        return code;
+    assert(idx < narr);
+    assert(narr > 0);
+    clear_cluster(&carr[idx]);
     for (int i = idx; i < narr - 1; i++) {
         carr[i] = carr[i + 1];
     }
@@ -232,6 +205,9 @@ int remove_cluster(struct cluster_t *carr, int narr, int idx)
  */
 float obj_distance(struct obj_t *o1, struct obj_t *o2)
 {
+    assert(o1 != NULL);
+    assert(o2 != NULL);
+
     float x1 = o1->x;
     float y1 = o1->y;
     float x2 = o2->x;
@@ -245,6 +221,11 @@ float obj_distance(struct obj_t *o1, struct obj_t *o2)
 */
 float cluster_distance(struct cluster_t *c1, struct cluster_t *c2)
 {
+    assert(c1 != NULL);
+    assert(c1->size > 0);
+    assert(c2 != NULL);
+    assert(c2->size > 0);
+
     float min = INFINITY;
     for (int i = 0; i < c1->size; i++) {
         for (int j = 0; j < c2->size; j++) {
@@ -265,6 +246,8 @@ float cluster_distance(struct cluster_t *c1, struct cluster_t *c2)
 */
 void find_neighbours(struct cluster_t *carr, int narr, int *c1, int *c2)
 {
+    assert(narr > 0);
+
     float min = INFINITY;
     for (int i = 0; i < narr; i++) {
         for (int j = i + 1; j < narr; j++) {
@@ -325,9 +308,8 @@ int check_unique_id(struct cluster_t *arr, int size, int id)
 void deallocate_clusters(struct cluster_t *arr, int n)
 {
     for (int i = 0; i < n; i++)
-        if (&arr[i] != NULL)
-            clear_cluster(&arr[i]);
-    my_free(arr);
+        clear_cluster(&arr[i]);
+    free(arr);
 }
 
 /*
@@ -339,6 +321,8 @@ void deallocate_clusters(struct cluster_t *arr, int n)
 */
 int load_clusters(char *filename, struct cluster_t **arr)
 {
+    assert(arr != NULL);
+
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
         return err_exit(ERR_INPUT_FILE, "Error: File could not be opened.\n");
@@ -360,9 +344,9 @@ int load_clusters(char *filename, struct cluster_t **arr)
         fclose(file);
         return err_exit(ERR_INPUT_FILE, "Error: File is not in the correct format. Sth is after count=N\n");
     }
-    *arr = (struct cluster_t *) my_calloc(count, sizeof(struct cluster_t));
+    *arr = (struct cluster_t *) calloc(count, sizeof(struct cluster_t));
     int i = 0;
-    int check = 1;
+    int check = 0;
     while (fgets(buffer, 100, file) != NULL && i < count)
     {
         int id;
@@ -383,22 +367,14 @@ int load_clusters(char *filename, struct cluster_t **arr)
             break;
         }
         struct obj_t obj = {id, x, y};
-        check = init_cluster(&(*arr)[i], 1);
-        if (check < 0) {
-            deallocate_clusters((*arr), i);
-            return check;
-        }
-        check = append_cluster(&(*arr)[i], obj);
-        if (check < 0) {
-            deallocate_clusters((*arr), i);
-            return check;
-        }
+        init_cluster(&(*arr)[i], 1);
+        append_cluster(&(*arr)[i], obj);
         i++;
     }
     fclose(file);
     if (i < count)
         check = err_exit(ERR_INPUT_OBJECTS, "Error: File is not in the correct format. Not enough objects.\n");
-    if (check == 1)
+    if (check == 0)
         return count;
     else
     {
@@ -444,8 +420,6 @@ int parse_args(int argc, char *argv[], int *n, char **filename)
 
 int main(int argc, char *argv[])
 {
-    time_t t;
-    srand((unsigned) time(&t));
     struct cluster_t *clusters = NULL;
     char *filename = NULL;
     int cluster_amount;
@@ -458,20 +432,11 @@ int main(int argc, char *argv[])
         return -current_cluster_amount;
     while (cluster_amount < current_cluster_amount)
     {
-        int c1, c2, code;
+        int c1, c2;
         find_neighbours(clusters, current_cluster_amount, &c1, &c2);
-        code = merge_clusters(&clusters[c1], &clusters[c2]);
-        if (code < 0) {
-            deallocate_clusters(clusters, current_cluster_amount);
-            return -code;
-        }
+        merge_clusters(&clusters[c1], &clusters[c2]);
         sort_cluster(&clusters[c1]);
-        code = remove_cluster(clusters, current_cluster_amount, c2);
-        if (code < 0) {
-            deallocate_clusters(clusters, current_cluster_amount);
-            return -current_cluster_amount;
-        }
-        current_cluster_amount = code;
+        current_cluster_amount = remove_cluster(clusters, current_cluster_amount, c2);
     }
     print_clusters(clusters, current_cluster_amount);
     deallocate_clusters(clusters, current_cluster_amount);
