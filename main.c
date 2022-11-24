@@ -63,7 +63,7 @@ int err_exit(int code, char *msg)
 
 void* my_calloc(size_t num, size_t size) {
 #ifdef CHECKALLOC
-    int i = rand() % 50;
+    int i = rand() % 20;
     if (i == 0) {
         return NULL;
     }
