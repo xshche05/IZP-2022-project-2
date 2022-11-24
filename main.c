@@ -56,6 +56,20 @@ int err_exit(int code, char *msg)
     return -code;
 }
 
+void* my_malloc(size_t size) {
+    void *ptr = malloc(size);
+    return ptr;
+}
+
+void* my_realloc(void *ptr, size_t size) {
+    void *new_ptr = realloc(ptr, size);
+    return new_ptr;
+}
+
+void my_free(void *ptr) {
+    free(ptr);
+}
+
 /*****************************************************************
  * Deklarace potrebnych datovych typu:
  *
@@ -100,7 +114,7 @@ int init_cluster(struct cluster_t *c, int cap) {
         c->obj = NULL;
     } else {
         c->capacity = cap;
-        c->obj = malloc(c->capacity * sizeof(struct obj_t));
+        c->obj = my_malloc(c->capacity * sizeof(struct obj_t));
         if (c->obj == NULL)
             return err_exit(ERR_ALLOC, "Error: Allocation failed");
     }
@@ -115,7 +129,7 @@ int clear_cluster(struct cluster_t *c)
 {
     c->size = 0;
     c->capacity = 0;
-    free(c->obj);
+    my_free(c->obj);
     c->obj = NULL;
     return init_cluster(c, c->capacity);
 }
@@ -135,7 +149,7 @@ struct cluster_t *resize_cluster(struct cluster_t *c, int new_cap)
 
     size_t size = sizeof(struct obj_t) * new_cap;
 
-    void *arr = realloc(c->obj, size);
+    void *arr = my_realloc(c->obj, size);
     if (arr == NULL)
         return NULL;
 
@@ -298,7 +312,7 @@ void deallocate_clusters(struct cluster_t *arr, int n)
 {
     for (int i = 0; i < n; i++)
         clear_cluster(&arr[i]);
-    free(arr);
+    my_free(arr);
 }
 
 /*
@@ -331,7 +345,7 @@ int load_clusters(char *filename, struct cluster_t **arr)
         fclose(file);
         return err_exit(ERR_INPUT_FILE, "Error: File is not in the correct format. Sth is after count=N\n");
     }
-    *arr = (struct cluster_t *) calloc(count, sizeof(struct cluster_t));
+    *arr = my_malloc(count * sizeof(struct cluster_t));
     int i = 0;
     int check = 0;
     while (fgets(buffer, 100, file) != NULL && i < count)
