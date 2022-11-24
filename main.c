@@ -58,7 +58,7 @@ int err_exit(int code, char *msg)
 }
 
 void* my_malloc(size_t size) {
-    int r = rand()% 5;
+    int r = rand()% 100;
     if (r == 0)
         return NULL;
     void *ptr = malloc(size);
@@ -351,7 +351,7 @@ int load_clusters(char *filename, struct cluster_t **arr)
     }
     *arr = my_malloc(count * sizeof(struct cluster_t));
     int i = 0;
-    int check = 0;
+    int check = 1;
     while (fgets(buffer, 100, file) != NULL && i < count)
     {
         int id;
@@ -374,10 +374,12 @@ int load_clusters(char *filename, struct cluster_t **arr)
         struct obj_t obj = {id, x, y};
         check = init_cluster(&(*arr)[i], 1);
         if (check < 0) {
+            deallocate_clusters((*arr), i);
             return check;
         }
         check = append_cluster(&(*arr)[i], obj);
         if (check < 0) {
+            deallocate_clusters((*arr), i);
             return check;
         }
         i++;
@@ -385,7 +387,7 @@ int load_clusters(char *filename, struct cluster_t **arr)
     fclose(file);
     if (i < count)
         check = err_exit(ERR_INPUT_OBJECTS, "Error: File is not in the correct format. Not enough objects.\n");
-    if (check == 0)
+    if (check == 1)
         return count;
     else
     {
@@ -448,7 +450,7 @@ int main(int argc, char *argv[])
         int c1, c2, code;
         find_neighbours(clusters, current_cluster_amount, &c1, &c2);
         code = merge_clusters(&clusters[c1], &clusters[c2]);
-        if (code != 1) {
+        if (code < 0) {
             deallocate_clusters(clusters, current_cluster_amount);
             return -code;
         }
