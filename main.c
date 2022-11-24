@@ -11,6 +11,7 @@
 #include <math.h> // sqrtf
 #include <limits.h> // INT_MAX
 #include <string.h>
+#include <time.h>
 
 /*****************************************************************
  * Ladici makra. Vypnout jejich efekt lze definici makra
@@ -57,7 +58,8 @@ int err_exit(int code, char *msg)
 }
 
 void* my_malloc(size_t size) {
-    if (rand()% 2)
+    int r = rand()% 5;
+    if (r == 0)
         return NULL;
     void *ptr = malloc(size);
     return ptr;
@@ -118,7 +120,7 @@ int init_cluster(struct cluster_t *c, int cap) {
         c->capacity = cap;
         c->obj = my_malloc(c->capacity * sizeof(struct obj_t));
         if (c->obj == NULL)
-            return err_exit(ERR_ALLOC, "Error: Allocation failed");
+            return err_exit(ERR_ALLOC, "Error: Allocation failed\n");
     }
     c->size = 0;
     return 1;
@@ -168,7 +170,7 @@ int append_cluster(struct cluster_t *c, struct obj_t obj)
 {
     if (c->size >= c->capacity) {
         if (resize_cluster(c, c->capacity + CLUSTER_CHUNK) == NULL)
-            return err_exit(ERR_ALLOC, "Error: Allocation failed");
+            return err_exit(ERR_ALLOC, "Error: Allocation failed\n");
     }
     c->obj[c->size] = obj;
     c->size++;
@@ -370,8 +372,14 @@ int load_clusters(char *filename, struct cluster_t **arr)
             break;
         }
         struct obj_t obj = {id, x, y};
-        init_cluster(&(*arr)[i], 1);
-        append_cluster(&(*arr)[i], obj);
+        check = init_cluster(&(*arr)[i], 1);
+        if (check < 0) {
+            return check;
+        }
+        check = append_cluster(&(*arr)[i], obj);
+        if (check < 0) {
+            return check;
+        }
         i++;
     }
     fclose(file);
@@ -423,6 +431,8 @@ int parse_args(int argc, char *argv[], int *n, char **filename)
 
 int main(int argc, char *argv[])
 {
+    time_t t;
+    srand((unsigned) time(&t));
     struct cluster_t *clusters = NULL;
     char *filename = NULL;
     int cluster_amount;
