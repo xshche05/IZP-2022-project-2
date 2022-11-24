@@ -61,12 +61,14 @@ void* my_malloc(size_t size) {
 //    int r = rand()% 100;
 //    if (r == 0)
 //        return NULL;
-    void *ptr = malloc(size);
+    void *ptr = NULL;
+    ptr = malloc(size);
     return ptr;
 }
 
 void* my_realloc(void *ptr, size_t size) {
-    void *new_ptr = realloc(ptr, size);
+    void *new_ptr = NULL;
+    new_ptr = realloc(ptr, size);
     return new_ptr;
 }
 
