@@ -621,9 +621,10 @@ def main():
     t.valgrind_cleanup()
 
 if __name__ == "__main__":
-    while val_errs == 0:
-        try:
-            main()
-        except KeyboardInterrupt:
-            break
-    print(f"\n\n\n\n VALGRIND - {val_errs}\n\n\n\n")
+    # while val_errs == 0:
+    #     try:
+    #         main()
+    #     except KeyboardInterrupt:
+    #         break
+    # print(f"\n\n\n\n VALGRIND - {val_errs}\n\n\n\n")
+    main()
