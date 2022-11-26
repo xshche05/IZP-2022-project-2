@@ -323,7 +323,7 @@ class Tester:
                 out += f"{obj_id}[{x},{y}] "
 
             out = out[:-1]
-            out += "\n"
+#            out += "\n"
 
         out = out[:-1]
         return out
