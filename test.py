@@ -27,7 +27,7 @@ BOLD = "\033[1m"
 END = "\033[0m"
 
 LOREM_IPSUM = "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."
-val_errs = 0
+
 BASE_INPUT = [
     ("40", "86", "663"),
     ("43", "747", "938"),
@@ -91,11 +91,11 @@ OUTPUT_4 = [(1,)]
 
 class Tester:
     def __init__(
-        self,
-        program_name: str,
-        save_logs_file: bool,
-        valgrind_enabled: bool,
-        stop_on_error: bool,
+            self,
+            program_name: str,
+            save_logs_file: bool,
+            valgrind_enabled: bool,
+            stop_on_error: bool,
     ) -> None:
         self.program_name = "./" + program_name
         self.test_count = 0
@@ -106,16 +106,16 @@ class Tester:
         self.save_logs_file = save_logs_file
 
     def test(
-        self,
-        test_name: str,
-        args: List[str],
-        filename: Optional[str],
-        input_: List[Tuple[str, str]],
-        expected_contacts: Optional[List[int]] = None,
-        should_fail: bool = False,
-        check_crash: bool = False,
-        create_file: bool = True,
-        count: Optional[int] = None,
+            self,
+            test_name: str,
+            args: List[str],
+            filename: Optional[str],
+            input_: List[Tuple[str, str]],
+            expected_contacts: Optional[List[int]] = None,
+            should_fail: bool = False,
+            check_crash: bool = False,
+            create_file: bool = True,
+            count: Optional[int] = None,
     ):
         self.test_count += 1
         failed = False
@@ -144,7 +144,7 @@ class Tester:
                 stdout=PIPE,
                 stderr=PIPE,
                 encoding="ascii",
-            )
+                )
         except UnicodeEncodeError as e:
             self.print_fail(test_name)
             print("Vystup obsahuje znaky ktere nepatri do ASCII (napr. diakritika)")
@@ -169,9 +169,9 @@ class Tester:
                 error_msg += "Program byl uspesne ukoncen, i presto ze nemel byt\n"
 
         if (
-            not self.assert_equal(str_output, p.stdout)
-            and not should_fail
-            and not check_crash
+                not self.assert_equal(str_output, p.stdout)
+                and not should_fail
+                and not check_crash
         ):
             failed = True
             error_msg += "Vystup programu se neshoduje s ocekavanym vystupem"
@@ -196,8 +196,6 @@ class Tester:
             print(self.debug(p.stderr))
 
             if valgrind_out:
-                global val_errs
-                val_errs += 1
                 print(f"{self.bold('Valgrind')}:")
                 print(self.debug(valgrind_out))
 
@@ -251,7 +249,7 @@ class Tester:
                 + args,
                 stdout=PIPE,
                 stderr=PIPE,
-            )
+                )
         except Exception as e:
             self.print_fail("Neporadilo se spustit valgrind")
             print(self.debug(e))
@@ -277,10 +275,10 @@ class Tester:
         )
 
     def create_input_file(
-        self,
-        input_: List[Tuple[str, str, str]],
-        filename: str,
-        count: Optional[str] = None,
+            self,
+            input_: List[Tuple[str, str, str]],
+            filename: str,
+            count: Optional[str] = None,
     ) -> None:
         if count is None:
             count = str(len(input_))
@@ -309,9 +307,9 @@ class Tester:
         return True
 
     def create_output(
-        self,
-        input_: List[Tuple[str, str, str]],
-        exptected_contacts: List[Tuple[int, ...]],
+            self,
+            input_: List[Tuple[str, str, str]],
+            exptected_contacts: List[Tuple[int, ...]],
     ) -> str:
         out = "Clusters:\n"
 
@@ -323,7 +321,7 @@ class Tester:
                 out += f"{obj_id}[{x},{y}] "
 
             out = out[:-1]
-#            out += "\n"
+            out += "\n"
 
         out = out[:-1]
         return out
@@ -380,7 +378,7 @@ class Tester:
             return False
 
 
-def main():
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Tester 2. IZP projektu [2022]")
     parser.add_argument(
         "program_name",
@@ -619,12 +617,3 @@ def main():
 
     t.print_stats()
     t.valgrind_cleanup()
-
-if __name__ == "__main__":
-    # while val_errs == 0:
-    #     try:
-    #         main()
-    #     except KeyboardInterrupt:
-    #         break
-    # print(f"\n\n\n\n VALGRIND - {val_errs}\n\n\n\n")
-    main()
