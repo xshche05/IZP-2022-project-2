@@ -62,12 +62,17 @@ int err_exit(int code, char *msg, int line)
 }
 
 void* my_calloc(size_t num, size_t size) {
-    void *ptr = calloc(num, size);
+    void *ptr;
     #ifdef CHECK_ALLOC
     int i = rand() % 20;
     if (i == 0) {
         ptr = NULL;
     }
+    else {
+        ptr = calloc(num, size);
+    }
+    #else
+    ptr = calloc(num, size);
     #endif
     if (ptr == NULL) {
         err_exit(ERR_ALLOC, "Allocation error", __LINE__);
