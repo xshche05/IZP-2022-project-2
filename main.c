@@ -20,7 +20,7 @@
  *      #define NDEBUG
  */
 
-#define CHECK_ALLOC
+// #define CHECK_ALLOC
 
 #ifdef NDEBUG
 #define debug(s)
@@ -64,7 +64,7 @@ int raise_error(int code, char *msg, int line)
 
 void* my_calloc(size_t num, size_t size) {
     void *ptr;
-#ifdef CHECK_ALLOC
+    #ifdef CHECK_ALLOC
     int i = rand() % 20;
     if (i == 0) {
         ptr = NULL;
@@ -72,9 +72,9 @@ void* my_calloc(size_t num, size_t size) {
     else {
         ptr = calloc(num, size);
     }
-#else
+    #else
     ptr = calloc(num, size);
-#endif
+    #endif
     if (ptr == NULL) {
         raise_error(ERR_ALLOC, "Allocation error", __LINE__);
     }
@@ -344,6 +344,15 @@ void print_cluster(struct cluster_t *c)
     putchar('\n');
 }
 
+/**
+ * @brief Overeni id objektu
+ *
+ * @param arr - pole shluku (SHLUKY S 1 OBJ!!)
+ * @param size - velikost pole shluku
+ * @param id - id pro overeni
+ *
+ * @return 0 - neni unikatni, 1 - je unikatni
+ */
 int check_unique_id(struct cluster_t *arr, int size, int id)
 {
     for (int i = 0; i < size; i++) {
@@ -354,14 +363,20 @@ int check_unique_id(struct cluster_t *arr, int size, int id)
     return 1;
 }
 
+/**
+ * @brief Funkce pro dealokaci pameti
+ *
+ * @param arr - Ukazaetel na pole shluku
+ * @param n - Poce shluku v poli
+ *
+ * Funkce dealokuje pamet pro vsechny shluky v poli a pro kazdy shluk dealokuje a nastavi NULL u ukazatele na pole shluku
+ */
 void deallocate_clusters(struct cluster_t **arr, int n)
 {
     for (int i = 0; i < n; i++)
         clear_cluster(&(*arr)[i]);
     free((*arr));
-    dfmt("%p \n", *arr);
     *arr = NULL;
-    dfmt("%p \n", *arr);
 }
 
 /*
@@ -455,8 +470,15 @@ void print_clusters(struct cluster_t *carr, int narr)
     }
 }
 
-/*
- Parsuje argumenty aplikace.
+/**
+ * Funkce pro parsrovani argumentu
+ *
+ * @param argc Pocet argumentu
+ * @param argv Pole argumentu
+ * @param n Ukazatel na pocet shluku
+ * @param filename Ukazatel na nazev souboru
+ *
+ * @return 0 pokud vse probehlo v poradku, jinak -ERR_INPUT_ARGS
  */
 int parse_args(int argc, char *argv[], int *n, char **filename)
 {
@@ -469,12 +491,10 @@ int parse_args(int argc, char *argv[], int *n, char **filename)
     {
         *n = strtol(argv[2], &endPt, 10);
         if (*endPt != '\0' || *n < 1) {
-            *filename = NULL;
             return raise_error(ERR_INPUT_ARGS, "Invalid N argument.", __LINE__);
         }
     }
     else {
-        *filename = NULL;
         return raise_error(ERR_INPUT_ARGS, "Invalid arguments", __LINE__);
     }
     return 0;
@@ -482,13 +502,14 @@ int parse_args(int argc, char *argv[], int *n, char **filename)
 
 int main(int argc, char *argv[])
 {
+    #ifdef CHECK_ALLOC
     time_t t;
     srand((unsigned) time(&t));
+    #endif
     struct cluster_t *clusters = NULL;
     char *filename = NULL;
     int cluster_amount;
-    parse_args(argc, argv, &cluster_amount, &filename);
-    if (filename == NULL)
+    if (parse_args(argc, argv, &cluster_amount, &filename) != 0)
         return -raise_error(ERR_INTERNAL, "Internal error", __LINE__);;
     int current_cluster_amount = load_clusters(filename, &clusters);
     if (clusters == NULL)
