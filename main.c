@@ -353,7 +353,7 @@ void deallocate_clusters(struct cluster_t **arr, int n)
 {
     for (int i = 0; i < n; i++)
         clear_cluster(&(*arr)[i]);
-    free(*arr);
+    free(&(*arr));
     dfmt("%p \n", *arr);
     *arr = NULL;
     dfmt("%p \n", *arr);
