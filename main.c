@@ -65,8 +65,6 @@ int raise_error(int code, char *msg, int line)
 void* my_calloc(size_t num, size_t size) {
     void *ptr = calloc(num, size);
     #ifdef CHECK_ALLOC
-    time_t t;
-    srand((unsigned) time(&t));
     int i = rand() % 20;
     if (i == 0) {
         ptr = NULL;
@@ -479,6 +477,8 @@ int parse_args(int argc, char *argv[], int *n, char **filename)
 
 int main(int argc, char *argv[])
 {
+    time_t t;
+    srand((unsigned) time(&t));
     struct cluster_t *clusters = NULL;
     char *filename = NULL;
     int cluster_amount;
