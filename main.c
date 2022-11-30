@@ -67,7 +67,7 @@ void* my_calloc(size_t num, size_t size) {
     #ifdef CHECK_ALLOC
     time_t t;
     srand((unsigned) time(&t));
-    int i = rand() % 100;
+    int i = rand() % 20;
     if (i == 0) {
         ptr = NULL;
     }
