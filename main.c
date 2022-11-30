@@ -349,14 +349,11 @@ int check_unique_id(struct cluster_t *arr, int size, int id)
     return 1;
 }
 
-void deallocate_clusters(struct cluster_t **arr, int n)
+void deallocate_clusters(struct cluster_t *arr, int n)
 {
     for (int i = 0; i < n; i++)
-        clear_cluster(&(*arr)[i]);
-    free((*arr));
-    dfmt("%p \n", *arr);
-    *arr = NULL;
-    dfmt("%p \n", *arr);
+        clear_cluster(&arr[i]);
+    free(arr);
 }
 
 /*
@@ -403,34 +400,40 @@ int load_clusters(char *filename, struct cluster_t **arr)
         x = (float) strtol(endPt, &endPt, 10);
         y = (float) strtol(endPt, &endPt, 10);
         if (id < 0 || x < 0 || y < 0 || x > 1000 || y > 1000) {
-            deallocate_clusters(&(*arr), i);
+            deallocate_clusters(*arr, i);
+            *arr = NULL;
             return raise_error(ERR_INPUT_OBJECTS, "File is not in the correct format. OBJ params are out of range.",
                                __LINE__);
         }
         if (*endPt != '\0' && *endPt != '\n') {
-            deallocate_clusters(&(*arr), i);
+            deallocate_clusters(*arr, i);
+            *arr = NULL;
             return raise_error(ERR_INPUT_OBJECTS,
                                "File is not in the correct format. Something is after OBJ in line or OBJ format is incorrect",
                                __LINE__);
         }
         if (!check_unique_id(*arr, i, id)) {
-            deallocate_clusters(&(*arr), i);
+            deallocate_clusters(*arr, i);
+            *arr = NULL;
             return raise_error(ERR_INPUT_OBJECTS, "File is not in the correct format. OBJ ID is not unique.", __LINE__);
         }
         struct obj_t obj = {id, x, y};
         if (init_cluster(&(*arr)[i], 1) != 0) {
-            deallocate_clusters(&(*arr), i);
+            deallocate_clusters(*arr, i);
+            *arr = NULL;
             return raise_error(ERR_INTERNAL, "Internal error", __LINE__);
         }
         if (append_cluster(&(*arr)[i], obj) != 0) {
-            deallocate_clusters(&(*arr), i);
+            deallocate_clusters(*arr, i);
+            *arr = NULL;
             return raise_error(ERR_INTERNAL, "Internal error", __LINE__);
         }
         i++;
     }
     fclose(file);
     if (i < count) {
-        deallocate_clusters(&(*arr), i);
+        deallocate_clusters(*arr, i);
+        *arr = NULL;
         return raise_error(ERR_INPUT_OBJECTS, "File is not in the correct format. Not enough objects.", __LINE__);
     }
     return count;
@@ -494,21 +497,21 @@ int main(int argc, char *argv[])
     {
         int c1, c2;
         if (find_neighbours(clusters, current_cluster_amount, &c1, &c2) != 0) {
-            deallocate_clusters(&clusters, current_cluster_amount);
+            deallocate_clusters(clusters, current_cluster_amount);
             return -raise_error(ERR_INTERNAL, "Internal error", __LINE__);
         }
         if (merge_clusters(&clusters[c1], &clusters[c2]) != 0) {
-            deallocate_clusters(&clusters, current_cluster_amount);
+            deallocate_clusters(clusters, current_cluster_amount);
             return -raise_error(ERR_INTERNAL, "Internal error", __LINE__);
         }
         sort_cluster(&clusters[c1]);
         current_cluster_amount = remove_cluster(clusters, current_cluster_amount, c2);
         if (current_cluster_amount < 0) {
-            deallocate_clusters(&clusters, current_cluster_amount);
+            deallocate_clusters(clusters, current_cluster_amount);
             return -raise_error(ERR_INTERNAL, "Internal error", __LINE__);
         }
     }
     print_clusters(clusters, current_cluster_amount);
-    deallocate_clusters(&clusters, current_cluster_amount);
+    deallocate_clusters(clusters, current_cluster_amount);
     return 0;
 }
