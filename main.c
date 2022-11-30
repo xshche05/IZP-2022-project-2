@@ -10,6 +10,7 @@
 #include <assert.h>
 #include <math.h> // sqrtf
 #include <string.h>
+#include <time.h>
 
 /*****************************************************************
  * Ladici makra. Vypnout jejich efekt lze definici makra
@@ -19,7 +20,7 @@
  *      #define NDEBUG
  */
 
-//#define CHECK_ALLOC
+#define CHECK_ALLOC
 
 #ifdef NDEBUG
 #define debug(s)
@@ -64,6 +65,8 @@ int raise_error(int code, char *msg, int line)
 void* my_calloc(size_t num, size_t size) {
     void *ptr = calloc(num, size);
     #ifdef CHECK_ALLOC
+    time_t t;
+    srand((unsigned) time(&t));
     int i = rand() % 100;
     if (i == 0) {
         ptr = NULL;
