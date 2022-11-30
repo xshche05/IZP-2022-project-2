@@ -19,7 +19,7 @@
  *      #define NDEBUG
  */
 
-//#define CHECK_ALLOC
+#define CHECK_ALLOC
 
 #ifdef NDEBUG
 #define debug(s)
@@ -64,7 +64,7 @@ int err_exit(int code, char *msg, int line)
 void* my_calloc(size_t num, size_t size) {
     void *ptr = calloc(num, size);
     #ifdef CHECK_ALLOC
-    int i = rand() % 100;
+    int i = rand() % 20;
     if (i == 0) {
         ptr = NULL;
     }
