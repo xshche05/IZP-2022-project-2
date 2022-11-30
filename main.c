@@ -10,7 +10,6 @@
 #include <assert.h>
 #include <math.h> // sqrtf
 #include <string.h>
-#include <time.h>
 
 /*****************************************************************
  * Ladici makra. Vypnout jejich efekt lze definici makra
@@ -20,7 +19,7 @@
  *      #define NDEBUG
  */
 
-#define CHECK_ALLOC
+//#define CHECK_ALLOC
 
 #ifdef NDEBUG
 #define debug(s)
@@ -54,24 +53,24 @@
 #define ERR_NULL_POINTER 104
 #define ERR_ALLOC 105
 #define ERR_FUNC_ARG 106
-#define ERR_INTERNAL 1
+#define ERR_INTERNAL 100
 
-int raise_error(int code, char *msg, int line)
+int err_exit(int code, char *msg, int line)
 {
-    fprintf(stderr, "LINE %d: %s (code - %d)\n", line, msg, code);
+    fprintf(stderr, "LINE %d: %s (exit code - %d)\n", line, msg, code);
     return -code;
 }
 
 void* my_calloc(size_t num, size_t size) {
     void *ptr = calloc(num, size);
     #ifdef CHECK_ALLOC
-    int i = rand() % 20;
+    int i = rand() % 100;
     if (i == 0) {
         ptr = NULL;
     }
     #endif
     if (ptr == NULL) {
-        raise_error(ERR_ALLOC, "Allocation error", __LINE__);
+        err_exit(ERR_ALLOC, "Allocation error", __LINE__);
     }
     return ptr;
 }
@@ -116,10 +115,10 @@ struct cluster_t {
 */
 int init_cluster(struct cluster_t *c, int cap) {
     if (c == NULL)
-        return raise_error(ERR_NULL_POINTER, "pointer is NULL", __LINE__);
+        return err_exit(ERR_NULL_POINTER, "pointer is NULL", __LINE__);
     assert(c != NULL);
     if (cap < 0)
-        return raise_error(ERR_FUNC_ARG, "Function argument isnt acceptable", __LINE__);
+        return err_exit(ERR_FUNC_ARG, "Function argument isnt acceptable", __LINE__);
     assert(cap >= 0);
     if (c->obj == NULL && cap == 0) {
         c->capacity = 0;
@@ -128,7 +127,7 @@ int init_cluster(struct cluster_t *c, int cap) {
         c->capacity = cap;
         c->obj = my_calloc(c->capacity, sizeof(struct obj_t));
         if (c->obj == NULL)
-            return raise_error(ERR_ALLOC, "calloc() failed", __LINE__);
+            return err_exit(ERR_ALLOC, "calloc() failed", __LINE__);
     }
     c->size = 0;
     return 0;
@@ -140,7 +139,7 @@ int init_cluster(struct cluster_t *c, int cap) {
 int clear_cluster(struct cluster_t *c)
 {
     if (c == NULL) {
-        return raise_error(ERR_NULL_POINTER, "pointer is NULL", __LINE__);
+        return err_exit(ERR_NULL_POINTER, "pointer is NULL", __LINE__);
     }
     assert(c != NULL);
     c->size = 0;
@@ -184,11 +183,11 @@ struct cluster_t *resize_cluster(struct cluster_t *c, int new_cap)
 int append_cluster(struct cluster_t *c, struct obj_t obj)
 {
     if (c == NULL)
-        return raise_error(ERR_NULL_POINTER, "pointer is NULL", __LINE__);
+        return err_exit(ERR_NULL_POINTER, "pointer is NULL", __LINE__);
     assert(c != NULL);
     if (c->size >= c->capacity)
         if (resize_cluster(c, c->capacity + CLUSTER_CHUNK) == NULL)
-            return raise_error(ERR_ALLOC, "Reallocation failed", __LINE__);
+            return err_exit(ERR_ALLOC, "Reallocation failed", __LINE__);
     c->obj[c->size] = obj;
     c->size++;
     return 0;
@@ -207,14 +206,14 @@ void sort_cluster(struct cluster_t *c);
 int merge_clusters(struct cluster_t *c1, struct cluster_t *c2)
 {
     if (c1 == NULL || c2 == NULL)
-        return raise_error(ERR_NULL_POINTER, "pointer is NULL", __LINE__);
+        return err_exit(ERR_NULL_POINTER, "pointer is NULL", __LINE__);
     assert(c1 != NULL);
     assert(c2 != NULL);
 
     sort_cluster(c1);
     for (int i = 0; i < c2->size; i++) {
         if (append_cluster(c1, c2->obj[i]) != 0)
-            return raise_error(ERR_INTERNAL, "Internal error", __LINE__);
+            return err_exit(ERR_INTERNAL, "Internal error", __LINE__);
     }
     return 0;
 }
@@ -230,11 +229,11 @@ int merge_clusters(struct cluster_t *c1, struct cluster_t *c2)
 int remove_cluster(struct cluster_t *carr, int narr, int idx)
 {
     if (idx >= narr || idx < 0 || narr < 0)
-        return raise_error(ERR_FUNC_ARG, "Function argument isnt acceptable", __LINE__);
+        return err_exit(ERR_FUNC_ARG, "Function argument isnt acceptable", __LINE__);
     assert(idx < narr);
     assert(narr > 0);
     if (clear_cluster(&carr[idx]) != 0)
-        return raise_error(ERR_INTERNAL, "Internal error", __LINE__);
+        return err_exit(ERR_INTERNAL, "Internal error", __LINE__);
     for (int i = idx; i < narr - 1; i++) {
         carr[i] = carr[i + 1];
     }
@@ -288,7 +287,7 @@ float cluster_distance(struct cluster_t *c1, struct cluster_t *c2)
 int find_neighbours(struct cluster_t *carr, int narr, int *c1, int *c2)
 {
     if (narr <= 0)
-        return raise_error(ERR_FUNC_ARG, "Function argument isnt acceptable", __LINE__);
+        return err_exit(ERR_FUNC_ARG, "Function argument isnt acceptable", __LINE__);
     assert(narr > 0);
 
     float min = INFINITY;
@@ -366,12 +365,12 @@ void deallocate_clusters(struct cluster_t *arr, int n)
 int load_clusters(char *filename, struct cluster_t **arr)
 {
     if (arr == NULL)
-        return raise_error(ERR_NULL_POINTER, "Pointer is NULL", __LINE__);
+        return err_exit(ERR_NULL_POINTER, "Pointer is NULL", __LINE__);
     assert(arr != NULL);
 
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
-        return raise_error(ERR_INPUT_FILE, "File could not be opened.", __LINE__);
+        return err_exit(ERR_INPUT_FILE, "File could not be opened.", __LINE__);
     }
     char buffer[102];
     fgets(buffer, 102, file);
@@ -379,16 +378,16 @@ int load_clusters(char *filename, struct cluster_t **arr)
     endPt = strchr(buffer, '=');
     if (endPt == NULL) {
         fclose(file);
-        return raise_error(ERR_INPUT_FILE, "File is not in the correct format. First line should be count=N", __LINE__);
+        return err_exit(ERR_INPUT_FILE, "File is not in the correct format. First line should be count=N", __LINE__);
     }
     int count = strtol(endPt+1, &endPt, 10);
     if (count <= 0) {
         fclose(file);
-        return raise_error(ERR_INPUT_FILE, "File is not in the correct format. Count < 0", __LINE__);
+        return err_exit(ERR_INPUT_FILE, "File is not in the correct format. Count < 0", __LINE__);
     }
     if (*endPt != '\0' && *endPt != '\n') {
         fclose(file);
-        return raise_error(ERR_INPUT_FILE, "File is not in the correct format. Sth is after count=N", __LINE__);
+        return err_exit(ERR_INPUT_FILE, "File is not in the correct format. Sth is after count=N", __LINE__);
     }
     *arr = my_calloc(count, sizeof(struct cluster_t));
     int i = 0;
@@ -400,41 +399,32 @@ int load_clusters(char *filename, struct cluster_t **arr)
         x = (float) strtol(endPt, &endPt, 10);
         y = (float) strtol(endPt, &endPt, 10);
         if (id < 0 || x < 0 || y < 0 || x > 1000 || y > 1000) {
-            deallocate_clusters(*arr, i);
-            *arr = NULL;
-            return raise_error(ERR_INPUT_OBJECTS, "File is not in the correct format. OBJ params are out of range.",
-                               __LINE__);
+            deallocate_clusters((*arr), i);
+            return err_exit(ERR_INPUT_OBJECTS, "File is not in the correct format. OBJ params are out of range.", __LINE__);
         }
         if (*endPt != '\0' && *endPt != '\n') {
-            deallocate_clusters(*arr, i);
-            *arr = NULL;
-            return raise_error(ERR_INPUT_OBJECTS,
-                               "File is not in the correct format. Something is after OBJ in line or OBJ format is incorrect",
-                               __LINE__);
+            deallocate_clusters((*arr), i);
+            return err_exit(ERR_INPUT_OBJECTS, "File is not in the correct format. Sth is after OBJ in line", __LINE__);
         }
         if (!check_unique_id(*arr, i, id)) {
-            deallocate_clusters(*arr, i);
-            *arr = NULL;
-            return raise_error(ERR_INPUT_OBJECTS, "File is not in the correct format. OBJ ID is not unique.", __LINE__);
+            deallocate_clusters((*arr), i);
+            return err_exit(ERR_INPUT_OBJECTS, "File is not in the correct format. OBJ ID is not unique.", __LINE__);
         }
         struct obj_t obj = {id, x, y};
         if (init_cluster(&(*arr)[i], 1) != 0) {
-            deallocate_clusters(*arr, i);
-            *arr = NULL;
-            return raise_error(ERR_INTERNAL, "Internal error", __LINE__);
+            deallocate_clusters((*arr), i);
+            return err_exit(ERR_INTERNAL, "Internal error", __LINE__);
         }
         if (append_cluster(&(*arr)[i], obj) != 0) {
-            deallocate_clusters(*arr, i);
-            *arr = NULL;
-            return raise_error(ERR_INTERNAL, "Internal error", __LINE__);
+            deallocate_clusters((*arr), i);
+            return err_exit(ERR_INTERNAL, "Internal error", __LINE__);
         }
         i++;
     }
     fclose(file);
     if (i < count) {
-        deallocate_clusters(*arr, i);
-        *arr = NULL;
-        return raise_error(ERR_INPUT_OBJECTS, "File is not in the correct format. Not enough objects.", __LINE__);
+        deallocate_clusters((*arr), i);
+        return err_exit(ERR_INPUT_OBJECTS, "File is not in the correct format. Not enough objects.", __LINE__);
     }
     return count;
 }
@@ -466,49 +456,44 @@ int parse_args(int argc, char *argv[], int *n, char **filename)
     else if (argc == 3)
     {
         *n = strtol(argv[2], &endPt, 10);
-        if (*endPt != '\0' || *n < 1) {
-            *filename = NULL;
-            return raise_error(ERR_INPUT_ARGS, "Invalid N argument.", __LINE__);
-        }
+        if (*endPt != '\0' || *n < 1)
+            return err_exit(ERR_INPUT_ARGS, "Invalid N argument.", __LINE__);
     }
-    else {
-        *filename = NULL;
-        return raise_error(ERR_INPUT_ARGS, "Invalid arguments", __LINE__);
-    }
+    else
+        return err_exit(ERR_INPUT_ARGS, "Invalid arguments", __LINE__);
     return 0;
 }
 
 int main(int argc, char *argv[])
 {
-    time_t t;
-    srand((unsigned) time(&t));
     struct cluster_t *clusters = NULL;
     char *filename = NULL;
     int cluster_amount;
-    parse_args(argc, argv, &cluster_amount, &filename);
-    if (filename == NULL)
-        return -raise_error(ERR_INTERNAL, "Internal error", __LINE__);;
+    int check_code;
+    check_code = parse_args(argc, argv, &cluster_amount, &filename);
+    if (check_code != 0)
+        return -check_code;
     int current_cluster_amount = load_clusters(filename, &clusters);
-    if (clusters == NULL)
-        return -raise_error(ERR_INTERNAL, "Internal error", __LINE__);
+    if (current_cluster_amount < 0)
+        return -current_cluster_amount;
     if (cluster_amount > current_cluster_amount)
-        return -raise_error(ERR_INPUT_ARGS, "N is bigger than number of objects.", __LINE__);
+        return -err_exit(ERR_INPUT_ARGS, "N is bigger than number of objects.", __LINE__);
     while (cluster_amount < current_cluster_amount)
     {
         int c1, c2;
         if (find_neighbours(clusters, current_cluster_amount, &c1, &c2) != 0) {
             deallocate_clusters(clusters, current_cluster_amount);
-            return -raise_error(ERR_INTERNAL, "Internal error", __LINE__);
+            return -err_exit(ERR_INTERNAL, "Internal error", __LINE__);
         }
         if (merge_clusters(&clusters[c1], &clusters[c2]) != 0) {
             deallocate_clusters(clusters, current_cluster_amount);
-            return -raise_error(ERR_INTERNAL, "Internal error", __LINE__);
+            return -err_exit(ERR_INTERNAL, "Internal error", __LINE__);
         }
         sort_cluster(&clusters[c1]);
         current_cluster_amount = remove_cluster(clusters, current_cluster_amount, c2);
         if (current_cluster_amount < 0) {
             deallocate_clusters(clusters, current_cluster_amount);
-            return -raise_error(ERR_INTERNAL, "Internal error", __LINE__);
+            return -err_exit(ERR_INTERNAL, "Internal error", __LINE__);
         }
     }
     print_clusters(clusters, current_cluster_amount);
