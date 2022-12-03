@@ -54,13 +54,29 @@
 #define ERR_FUNC_ARG 106            // Kod chyby pro chybu pri praci s argumenty funkce
 #define ERR_INTERNAL 1              // Kod chyby pro interni chybu programu
 
-int raise_error(int code, char *msg, int line)
-{
+/**
+ * @brief Funkce pro vypis chyboveho hlaseni
+ *
+ * @param code - kod chyby
+ * @param msg - chybova zprava
+ * @param line - cislo radku kodu, kde doslo k chybe
+ *
+ * @return zaporna hodnota kodu chyby
+ */
+int raise_error(int code, char *msg, int line) {
     fprintf(stderr, "CODE LINE %d: %s (code - %d)\n", line, msg, code); // Vypise chybovou hlasku na stderr
     return -code; // Vrati zaporny kod chyby
 }
 
-void* my_calloc(size_t num, size_t size) { // Vlastne funkce pro alokaci pameti
+/**
+ * @brief Funkce pro alokaci pameti pro pole
+ *
+ * @param num - pocet prvku pole
+ * @param size - velikost prvku pole
+ *
+ * @return ukaazatel na alokovanou pamet, jinak NULL a vytiskne chybovou hlasku
+ */
+void *my_calloc(size_t num, size_t size) { // Vlastne funkce pro alokaci pameti
     void *ptr;
     ptr = calloc(num, size);
     if (ptr == NULL) {
@@ -103,10 +119,15 @@ struct cluster_t {
  *
  */
 
-/*
- Inicializace shluku 'c'. Alokuje pamet pro cap objektu (kapacitu).
- Ukazatel NULL u pole objektu znamena kapacitu 0.
-*/
+/**
+ * @brief Inicializace shluku 'c'. Alokuje pamet pro cap objektu (kapacitu).
+ * Ukazatel NULL u pole objektu znamena kapacitu 0.
+ *
+ * @param c - Shluk, ktery se ma inicializovat
+ * @param cap - Kapacita shluku
+ *
+ * @return Vraci 0 pri uspechu, jinak vraci zaporny kod chyby
+ */
 int init_cluster(struct cluster_t *c, int cap) {
     if (c == NULL) // Kontrola ukazatele
         return raise_error(ERR_NULL_POINTER, "pointer is NULL", __LINE__);
@@ -127,11 +148,14 @@ int init_cluster(struct cluster_t *c, int cap) {
     return 0; // Vrati 0
 }
 
-/*
- Odstraneni vsech objektu shluku a inicializace na prazdny shluk.
+/**
+ * @brief Odstraneni vsech objektu shluku a inicializace na prazdny shluk.
+ *
+ * @param c - Ukazatel na shluk
+ *
+ * @return int - Vrati 0 pri uspechu, jinak zaporny kod chyby
  */
-int clear_cluster(struct cluster_t *c)
-{
+int clear_cluster(struct cluster_t *c) {
     if (c == NULL) { // Kontrola ukazatele
         return raise_error(ERR_NULL_POINTER, "pointer is NULL", __LINE__);
     }
@@ -147,8 +171,7 @@ const int CLUSTER_CHUNK = 10;
 /*
  Zmena kapacity shluku 'c' na kapacitu 'new_cap'.
  */
-struct cluster_t *resize_cluster(struct cluster_t *c, int new_cap)
-{
+struct cluster_t *resize_cluster(struct cluster_t *c, int new_cap) {
     // TUTO FUNKCI NEMENTE
     assert(c);
     assert(c->capacity >= 0);
@@ -163,17 +186,21 @@ struct cluster_t *resize_cluster(struct cluster_t *c, int new_cap)
     if (arr == NULL)
         return NULL;
 
-    c->obj = (struct obj_t*)arr;
+    c->obj = (struct obj_t *) arr;
     c->capacity = new_cap;
     return c;
 }
 
-/*
- Prida objekt 'obj' na konec shluku 'c'. Rozsiri shluk, pokud se do nej objekt
- nevejde.
+/**
+ * @brief Prida objekt 'obj' na konec shluku 'c'. Rozsiri shluk, pokud se do nej objekt
+ * nevejde.
+ *
+ * @param c - ukazatel na shluk, do ktereho se ma objekt pridat
+ * @param obj - objekt, ktery se ma pridat
+ *
+ * @return int - 0 pri uspechu, jinak zaporny kod chyby
  */
-int append_cluster(struct cluster_t *c, struct obj_t obj)
-{
+int append_cluster(struct cluster_t *c, struct obj_t obj) {
     if (c == NULL) // Kontrola ukazatele
         return raise_error(ERR_NULL_POINTER, "pointer is NULL", __LINE__);
 //    assert(c != NULL);
@@ -185,18 +212,24 @@ int append_cluster(struct cluster_t *c, struct obj_t obj)
     return 0;
 }
 
-/*
- Seradi objekty ve shluku 'c' vzestupne podle jejich identifikacniho cisla.
+/**
+ * @brief Seradi objekty ve shluku 'c' vzestupne podle jejich identifikacniho cisla.
+ *
+ * @param c - Ukazatel na shluk, ktery se ma seradit.
  */
 void sort_cluster(struct cluster_t *c);
 
-/*
- Do shluku 'c1' prida objekty 'c2'. Shluk 'c1' bude v pripade nutnosti rozsiren.
- Objekty ve shluku 'c1' budou serazeny vzestupne podle identifikacniho cisla.
- Shluk 'c2' bude nezmenen.
+/**
+ * @brief Do shluku 'c1' prida objekty 'c2'. Shluk 'c1' bude v pripade nutnosti rozsiren.
+ * Objekty ve shluku 'c1' budou serazeny vzestupne podle identifikacniho cisla.
+ * Shluk 'c2' bude nezmenen.
+ *
+ * @param c1 - Ukazatel na shluk, do ktereho se pridavaji objekty
+ * @param c2 - Ukazatel na shluk, ze ktereho se pridavaji objekty
+ *
+ * @return Vraci 0 pri uspechu, jinak vraci zaporny kod chyby
  */
-int merge_clusters(struct cluster_t *c1, struct cluster_t *c2)
-{
+int merge_clusters(struct cluster_t *c1, struct cluster_t *c2) {
     if (c1 == NULL || c2 == NULL) // Kontrola ukazatele
         return raise_error(ERR_NULL_POINTER, "pointer is NULL", __LINE__);
 //    assert(c1 != NULL);
@@ -213,13 +246,18 @@ int merge_clusters(struct cluster_t *c1, struct cluster_t *c2)
 /**********************************************************************/
 /* Prace s polem shluku */
 
-/*
- Odstrani shluk z pole shluku 'carr'. Pole shluku obsahuje 'narr' polozek
- (shluku). Shluk pro odstraneni se nachazi na indexu 'idx'. Funkce vraci novy
- pocet shluku v poli.
-*/
-int remove_cluster(struct cluster_t *carr, int narr, int idx)
-{
+/**
+ * @brief Odstrani shluk z pole shluku 'carr'. Pole shluku obsahuje 'narr' polozek
+ * (shluku). Shluk pro odstraneni se nachazi na indexu 'idx'. Funkce vraci novy
+ * pocet shluku v poli.
+ *
+ * @param carr - ukazatel na pole shluku
+ * @param narr - pocet shluku v poli
+ * @param idx - index shluku pro odstraneni
+ *
+ * @return Vraci novy pocet shluku v poli, jinak vraci zaporny kod chyby
+ */
+int remove_cluster(struct cluster_t *carr, int narr, int idx) {
     if (idx >= narr || idx < 0 || narr < 0) // Kontrola indexu
         return raise_error(ERR_FUNC_ARG, "Function argument isnt acceptable", __LINE__);
 //    assert(idx < narr);
@@ -232,11 +270,16 @@ int remove_cluster(struct cluster_t *carr, int narr, int idx)
     return narr - 1;
 }
 
-/*
- Pocita Euklidovskou vzdalenost mezi dvema objekty.
+/**
+ * @brief Pocita Euklidovskou vzdalenost mezi dvema objekty.
+ *
+ * @param o1 - Prvni objekt.
+ * @param o2 - Druhy objekt.
+ *
+ * @return Vzdalenost mezi objekty. V pripade chyby vraci -1.
  */
 float obj_distance(struct obj_t *o1, struct obj_t *o2) {
-    if (o1 == NULL || o2 == NULL){ // Kontrola ukazatele
+    if (o1 == NULL || o2 == NULL) { // Kontrola ukazatele
         raise_error(ERR_NULL_POINTER, "pointer is NULL", __LINE__);
         return -1;
     }
@@ -251,11 +294,15 @@ float obj_distance(struct obj_t *o1, struct obj_t *o2) {
     return distance; // Vraci vzdalenost
 }
 
-/*
- Pocita vzdalenost dvou shluku.
-*/
-float cluster_distance(struct cluster_t *c1, struct cluster_t *c2)
-{
+/**
+ * @brief Pocita vzdalenost dvou shluku.
+ *
+ * @param c1 - Prvni shluk.
+ * @param c2 - Druhy shluk.
+ *
+ * @return Vzdalenost mezi objekty. V pripade chyby vraci -1.
+ */
+float cluster_distance(struct cluster_t *c1, struct cluster_t *c2) {
     if (c1 == NULL || c2 == NULL) { // Kontrola ukazatele
         raise_error(ERR_NULL_POINTER, "pointer is NULL", __LINE__);
         return -1;
@@ -287,14 +334,18 @@ float cluster_distance(struct cluster_t *c1, struct cluster_t *c2)
     return min;
 }
 
-/*
- Funkce najde dva nejblizsi shluky. V poli shluku 'carr' o velikosti 'narr'
- hleda dva nejblizsi shluky. Nalezene shluky identifikuje jejich indexy v poli
- 'carr'. Funkce nalezene shluky (indexy do pole 'carr') uklada do pameti na
- adresu 'c1' resp. 'c2'.
-*/
-int find_neighbours(struct cluster_t *carr, int narr, int *c1, int *c2)
-{
+/**
+ * @brief Funkce najde dva nejblizsi shluky. V poli shluku 'carr' o velikosti 'narr'
+ * hleda dva nejblizsi shluky. Nalezene shluky identifikuje jejich indexy v poli
+ * 'carr'. Funkce nalezene shluky (indexy do pole 'carr') uklada do pameti na
+ * adresu 'c1' resp. 'c2'.
+ *
+ * @param carr - ukazatel na pole shluku
+ * @param narr - pocet shluku v poli
+ * @param c1 - ukazatel na index prvniho nejblizsiho shluku
+ * @param c2 - ukazatel na index druheho nejblizsiho shluku
+ */
+int find_neighbours(struct cluster_t *carr, int narr, int *c1, int *c2) {
     if (narr <= 0) // Kontrola velikosti pole
         return raise_error(ERR_FUNC_ARG, "Function argument isnt acceptable", __LINE__);
 //    assert(narr > 0);
@@ -316,11 +367,10 @@ int find_neighbours(struct cluster_t *carr, int narr, int *c1, int *c2)
 }
 
 // pomocna funkce pro razeni shluku
-static int obj_sort_compar(const void *a, const void *b)
-{
+static int obj_sort_compar(const void *a, const void *b) {
     // TUTO FUNKCI NEMENTE
-    const struct obj_t *o1 = (const struct obj_t *)a;
-    const struct obj_t *o2 = (const struct obj_t *)b;
+    const struct obj_t *o1 = (const struct obj_t *) a;
+    const struct obj_t *o2 = (const struct obj_t *) b;
     if (o1->id < o2->id) return -1;
     if (o1->id > o2->id) return 1;
     return 0;
@@ -329,20 +379,19 @@ static int obj_sort_compar(const void *a, const void *b)
 /*
  Razeni objektu ve shluku vzestupne podle jejich identifikatoru.
 */
-void sort_cluster(struct cluster_t *c)
-{
+void sort_cluster(struct cluster_t *c) {
     // TUTO FUNKCI NEMENTE
     qsort(c->obj, c->size, sizeof(struct obj_t), &obj_sort_compar);
 }
 
-/*
- Tisk shluku 'c' na stdout.
-*/
-void print_cluster(struct cluster_t *c)
-{
+/**
+  * @brief Tisk shluku 'c' na stdout.
+  *
+  * @param c - ukazatel na shluk, který se má vytisknout.
+  */
+void print_cluster(struct cluster_t *c) {
     // TUTO FUNKCI NEMENTE
-    for (int i = 0; i < c->size; i++)
-    {
+    for (int i = 0; i < c->size; i++) {
         if (i) putchar(' ');
         printf("%d[%g,%g]", c->obj[i].id, c->obj[i].x, c->obj[i].y);
     }
@@ -358,8 +407,7 @@ void print_cluster(struct cluster_t *c)
  *
  * @return 0 - neni unikatni, 1 - je unikatni
  */
-int check_unique_id(struct cluster_t *arr, int size, int id)
-{
+int check_unique_id(struct cluster_t *arr, int size, int id) {
     for (int i = 0; i < size; i++) {
         if (arr[i].obj->id == id) {
             return 0; // Neni unikatni
@@ -376,23 +424,26 @@ int check_unique_id(struct cluster_t *arr, int size, int id)
  *
  * Funkce dealokuje pamet pro vsechny shluky v poli a pro kazdy shluk dealokuje a nastavi NULL u ukazatele na pole shluku
  */
-void deallocate_clusters(struct cluster_t **arr, int n)
-{
+void deallocate_clusters(struct cluster_t **arr, int n) {
     for (int i = 0; i < n; i++)
         clear_cluster(&(*arr)[i]); // Dealokuje pamet pro kazdy shluk
     free((*arr)); // Dealokuje pamet pro pole shluku
     *arr = NULL;
 }
 
-/*
- Ze souboru 'filename' nacte objekty. Pro kazdy objekt vytvori shluk a ulozi
- jej do pole shluku. Alokuje prostor pro pole vsech shluku a ukazatel na prvni
- polozku pole (ukalazatel na prvni shluk v alokovanem poli) ulozi do pameti,
- kam se odkazuje parametr 'arr'. Funkce vraci pocet nactenych objektu (shluku).
- V pripade nejake chyby uklada do pameti, kam se odkazuje 'arr', hodnotu NULL.
-*/
-int load_clusters(char *filename, struct cluster_t **arr)
-{
+/**
+ * @brief Ze souboru 'filename' nacte objekty. Pro kazdy objekt vytvori shluk a ulozi
+ * jej do pole shluku. Alokuje prostor pro pole vsech shluku a ukazatel na prvni
+ * polozku pole (ukalazatel na prvni shluk v alokovanem poli) ulozi do pameti,
+ * kam se odkazuje parametr 'arr'. Funkce vraci pocet nactenych objektu (shluku).
+ * V pripade nejake chyby uklada do pameti, kam se odkazuje 'arr', hodnotu NULL.
+ *
+ * @param filename - jmeno souboru
+ * @param arr - ukazatel na pole shluku
+ *
+ * @return pocet nactenych objektu (shluku) nebo zaporny chybovy kod
+ */
+int load_clusters(char *filename, struct cluster_t **arr) {
     if (arr == NULL) // Kontrola ukazatele
         return raise_error(ERR_NULL_POINTER, "Pointer is NULL", __LINE__);
 //    assert(arr != NULL);
@@ -409,7 +460,7 @@ int load_clusters(char *filename, struct cluster_t **arr)
         fclose(file);
         return raise_error(ERR_INPUT_FILE, "File is not in the correct format. First line should be count=N", __LINE__);
     }
-    int count = strtol(endPt+1, &endPt, 10); // Nacte cislo za znakem '=' a ulozi do promenne count
+    int count = strtol(endPt + 1, &endPt, 10); // Nacte cislo za znakem '=' a ulozi do promenne count
     if (count <= 0) { // Pokud se nepodari nacist cislo, vraci chybu
         fclose(file);
         return raise_error(ERR_INPUT_FILE, "File is not in the correct format. Count < 0", __LINE__);
@@ -420,20 +471,21 @@ int load_clusters(char *filename, struct cluster_t **arr)
     }
     *arr = my_calloc(count, sizeof(struct cluster_t));
     int i = 0;
-    while (fgets(buffer, 100, file) != NULL && i < count)
-    {
+    while (fgets(buffer, 100, file) != NULL && i < count) {
         int id;
         float x, y;
         id = strtol(buffer, &endPt, 10);
         if (*endPt != ' ') {
             deallocate_clusters(&(*arr), i);
-            return raise_error(ERR_INPUT_FILE, "File is not in the correct format. ID is not followed by space or is not a int number",
+            return raise_error(ERR_INPUT_FILE,
+                               "File is not in the correct format. ID is not followed by space or is not a int number",
                                __LINE__);
         }
         x = (float) strtol(endPt, &endPt, 10);
         if (*endPt != ' ') {
             deallocate_clusters(&(*arr), i);
-            return raise_error(ERR_INPUT_FILE, "File is not in the correct format. X is not followed by space or is not a int number",
+            return raise_error(ERR_INPUT_FILE,
+                               "File is not in the correct format. X is not followed by space or is not a int number",
                                __LINE__);
         }
         y = (float) strtol(endPt, &endPt, 10);
@@ -471,68 +523,59 @@ int load_clusters(char *filename, struct cluster_t **arr)
     return count;
 }
 
-/*
- Tisk pole shluku. Parametr 'carr' je ukazatel na prvni polozku (shluk).
- Tiskne se prvnich 'narr' shluku.
+/**
+ * @brief Tisk pole shluku. Parametr 'carr' je ukazatel na prvni polozku (shluk). Tiskne se prvnich 'narr' shluku.
+ *
+ * @param carr - Ukazatel na prvni shluk v poli shluku.
+ * @param narr - Pocet shluku k tisku.
 */
-void print_clusters(struct cluster_t *carr, int narr)
-{
+void print_clusters(struct cluster_t *carr, int narr) {
     printf("Clusters:\n");
-    for (int i = 0; i < narr; i++)
-    {
+    for (int i = 0; i < narr; i++) {
         printf("cluster %d: ", i);
         print_cluster(&carr[i]);
     }
 }
 
 /**
- * Funkce pro parsrovani argumentu
+ * @brief Funkce pro parsrovani argumentu
  *
- * @param argc Pocet argumentu
- * @param argv Pole argumentu
- * @param n Ukazatel na pocet shluku
- * @param filename Ukazatel na nazev souboru
+ * @param argc - Pocet argumentu
+ * @param argv - Pole argumentu
+ * @param n - Ukazatel na pocet shluku
+ * @param filename - Ukazatel na nazev souboru
  *
  * @return 0 pokud vse probehlo v poradku, jinak -ERR_INPUT_ARGS
  */
-int parse_args(int argc, char *argv[], int *n, char **filename)
-{
+int parse_args(int argc, char *argv[], int *n, char **filename) {
     char *endPt = NULL;
     if (argc > 1)
         *filename = argv[1];
     if (argc == 2)
         *n = 1;
-    else if (argc == 3)
-    {
+    else if (argc == 3) {
         *n = strtol(argv[2], &endPt, 10);
         if (*endPt != '\0' || *n < 1) {
             return raise_error(ERR_INPUT_ARGS, "Invalid N argument.", __LINE__);
         }
-    }
-    else {
+    } else {
         return raise_error(ERR_INPUT_ARGS, "Invalid arguments", __LINE__);
     }
     return 0;
 }
 
-int main(int argc, char *argv[])
-{
-    #ifdef CHECK_ALLOC
-    time_t t;
-    srand((unsigned) time(&t));
-    #endif
+int main(int argc, char *argv[]) {
     struct cluster_t *clusters = NULL;
     char *filename = NULL;
     int cluster_amount;
     if (parse_args(argc, argv, &cluster_amount, &filename) != 0)
-        return -raise_error(ERR_INTERNAL, "Internal error", __LINE__);;
+        return -raise_error(ERR_INTERNAL, "Internal error", __LINE__);
     int current_cluster_amount = load_clusters(filename, &clusters);
     if (clusters == NULL)
         return -raise_error(ERR_INTERNAL, "Internal error", __LINE__);
     if (cluster_amount > current_cluster_amount)
         return -raise_error(ERR_INPUT_ARGS, "N is bigger than number of objects.", __LINE__);
-    while (cluster_amount < current_cluster_amount)
-    {
+    while (cluster_amount < current_cluster_amount) {
         int c1, c2;
         if (find_neighbours(clusters, current_cluster_amount, &c1, &c2) != 0) {
             deallocate_clusters(&clusters, current_cluster_amount);
