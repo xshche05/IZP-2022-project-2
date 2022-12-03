@@ -10,7 +10,7 @@
 #include <assert.h>
 #include <math.h> // sqrtf
 #include <string.h>
-#include <time.h>
+// #include <time.h>
 
 /*****************************************************************
  * Ladici makra. Vypnout jejich efekt lze definici makra
