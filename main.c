@@ -2,7 +2,7 @@
  * 2. projekt IZP 2022/23
  * Autor: Kirill Shchetiniuk,
  * Login: xshche05
- * Datum: 2022-11-10
+ * Datum: 04-12-2022
  */
 
 #include <stdio.h>
