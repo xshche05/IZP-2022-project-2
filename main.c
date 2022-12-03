@@ -10,7 +10,6 @@
 #include <assert.h>
 #include <math.h> // sqrtf
 #include <string.h>
-// #include <time.h>
 
 /*****************************************************************
  * Ladici makra. Vypnout jejich efekt lze definici makra
@@ -20,7 +19,6 @@
  *      #define NDEBUG
  */
 
-// #define CHECK_ALLOC
 
 #ifdef NDEBUG
 #define debug(s)
@@ -64,17 +62,7 @@ int raise_error(int code, char *msg, int line)
 
 void* my_calloc(size_t num, size_t size) {
     void *ptr;
-    #ifdef CHECK_ALLOC
-    int i = rand() % 20;
-    if (i == 0) {
-        ptr = NULL;
-    }
-    else {
-        ptr = calloc(num, size);
-    }
-    #else
     ptr = calloc(num, size);
-    #endif
     if (ptr == NULL) {
         raise_error(ERR_ALLOC, "Allocation error", __LINE__);
     }
@@ -122,10 +110,10 @@ struct cluster_t {
 int init_cluster(struct cluster_t *c, int cap) {
     if (c == NULL)
         return raise_error(ERR_NULL_POINTER, "pointer is NULL", __LINE__);
-    assert(c != NULL);
+//    assert(c != NULL);
     if (cap < 0)
         return raise_error(ERR_FUNC_ARG, "Function argument isnt acceptable", __LINE__);
-    assert(cap >= 0);
+//    assert(cap >= 0);
     if (c->obj == NULL && cap == 0) {
         c->capacity = 0;
         c->obj = NULL;
@@ -147,7 +135,7 @@ int clear_cluster(struct cluster_t *c)
     if (c == NULL) {
         return raise_error(ERR_NULL_POINTER, "pointer is NULL", __LINE__);
     }
-    assert(c != NULL);
+//    assert(c != NULL);
     c->size = 0;
     c->capacity = 0;
     free(c->obj);
@@ -190,7 +178,7 @@ int append_cluster(struct cluster_t *c, struct obj_t obj)
 {
     if (c == NULL)
         return raise_error(ERR_NULL_POINTER, "pointer is NULL", __LINE__);
-    assert(c != NULL);
+//    assert(c != NULL);
     if (c->size >= c->capacity)
         if (resize_cluster(c, c->capacity + CLUSTER_CHUNK) == NULL)
             return raise_error(ERR_ALLOC, "Reallocation failed", __LINE__);
@@ -213,8 +201,8 @@ int merge_clusters(struct cluster_t *c1, struct cluster_t *c2)
 {
     if (c1 == NULL || c2 == NULL)
         return raise_error(ERR_NULL_POINTER, "pointer is NULL", __LINE__);
-    assert(c1 != NULL);
-    assert(c2 != NULL);
+//    assert(c1 != NULL);
+//    assert(c2 != NULL);
 
     sort_cluster(c1);
     for (int i = 0; i < c2->size; i++) {
@@ -236,8 +224,8 @@ int remove_cluster(struct cluster_t *carr, int narr, int idx)
 {
     if (idx >= narr || idx < 0 || narr < 0)
         return raise_error(ERR_FUNC_ARG, "Function argument isnt acceptable", __LINE__);
-    assert(idx < narr);
-    assert(narr > 0);
+//    assert(idx < narr);
+//    assert(narr > 0);
     if (clear_cluster(&carr[idx]) != 0)
         return raise_error(ERR_INTERNAL, "Internal error", __LINE__);
     for (int i = idx; i < narr - 1; i++) {
@@ -249,10 +237,13 @@ int remove_cluster(struct cluster_t *carr, int narr, int idx)
 /*
  Pocita Euklidovskou vzdalenost mezi dvema objekty.
  */
-float obj_distance(struct obj_t *o1, struct obj_t *o2)
-{
-    assert(o1 != NULL);
-    assert(o2 != NULL);
+float obj_distance(struct obj_t *o1, struct obj_t *o2) {
+    if (o1 == NULL || o2 == NULL){
+        raise_error(ERR_NULL_POINTER, "pointer is NULL", __LINE__);
+        return -1;
+    }
+//    assert(o1 != NULL);
+//    assert(o2 != NULL);
 
     float x1 = o1->x;
     float y1 = o1->y;
@@ -267,15 +258,29 @@ float obj_distance(struct obj_t *o1, struct obj_t *o2)
 */
 float cluster_distance(struct cluster_t *c1, struct cluster_t *c2)
 {
-    assert(c1 != NULL);
-    assert(c1->size > 0);
-    assert(c2 != NULL);
-    assert(c2->size > 0);
+    if (c1 == NULL || c2 == NULL) {
+        raise_error(ERR_NULL_POINTER, "pointer is NULL", __LINE__);
+        return -1;
+    }
+    if (c1->size <= 0 || c2->size <= 0) {
+        raise_error(ERR_FUNC_ARG, "Function argument isnt acceptable", __LINE__);
+        return -1;
+    }
+
+//    assert(c1 != NULL);
+//    assert(c1->size > 0);
+//    assert(c2 != NULL);
+//    assert(c2->size > 0);
 
     float min = INFINITY;
     for (int i = 0; i < c1->size; i++) {
         for (int j = 0; j < c2->size; j++) {
             float dist = obj_distance(&c1->obj[i], &c2->obj[j]);
+            if (dist < 0)
+            {
+                raise_error(ERR_INTERNAL, "Internal error", __LINE__);
+                return -1;
+            }
             if (dist < min) {
                 min = dist;
             }
@@ -294,12 +299,14 @@ int find_neighbours(struct cluster_t *carr, int narr, int *c1, int *c2)
 {
     if (narr <= 0)
         return raise_error(ERR_FUNC_ARG, "Function argument isnt acceptable", __LINE__);
-    assert(narr > 0);
+//    assert(narr > 0);
 
     float min = INFINITY;
     for (int i = 0; i < narr; i++) {
         for (int j = i + 1; j < narr; j++) {
             float dist = cluster_distance(&carr[i], &carr[j]);
+            if (dist < 0)
+                return raise_error(ERR_INTERNAL, "Internal error", __LINE__);
             if (dist < min) {
                 min = dist;
                 *c1 = i;
@@ -390,7 +397,7 @@ int load_clusters(char *filename, struct cluster_t **arr)
 {
     if (arr == NULL)
         return raise_error(ERR_NULL_POINTER, "Pointer is NULL", __LINE__);
-    assert(arr != NULL);
+//    assert(arr != NULL);
 
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
