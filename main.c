@@ -46,21 +46,21 @@
  * Error codes
  */
 
-#define ERR_INPUT_ARGS 101
-#define ERR_INPUT_FILE 102
-#define ERR_INPUT_OBJECTS 103
-#define ERR_NULL_POINTER 104
-#define ERR_ALLOC 105
-#define ERR_FUNC_ARG 106
-#define ERR_INTERNAL 1
+#define ERR_INPUT_ARGS 101          // Kod chyby pro chybny pocet argumentu/chybne argumenty
+#define ERR_INPUT_FILE 102          // Kod chyby pro chybu pri cteni ze souboru
+#define ERR_INPUT_OBJECTS 103       // Kod chyby pro chybu pri cteni objektu ze souboru
+#define ERR_NULL_POINTER 104        // Kod chyby pro chybu pri praci s NULL ukazatelem
+#define ERR_ALLOC 105               // Kod chyby pro chybu pri alokaci pameti
+#define ERR_FUNC_ARG 106            // Kod chyby pro chybu pri praci s argumenty funkce
+#define ERR_INTERNAL 1              // Kod chyby pro interni chybu programu
 
 int raise_error(int code, char *msg, int line)
 {
-    fprintf(stderr, "LINE %d: %s (code - %d)\n", line, msg, code);
-    return -code;
+    fprintf(stderr, "CODE LINE %d: %s (code - %d)\n", line, msg, code); // Vypise chybovou hlasku na stderr
+    return -code; // Vrati zaporny kod chyby
 }
 
-void* my_calloc(size_t num, size_t size) {
+void* my_calloc(size_t num, size_t size) { // Vlastne funkce pro alokaci pameti
     void *ptr;
     ptr = calloc(num, size);
     if (ptr == NULL) {
@@ -108,23 +108,23 @@ struct cluster_t {
  Ukazatel NULL u pole objektu znamena kapacitu 0.
 */
 int init_cluster(struct cluster_t *c, int cap) {
-    if (c == NULL)
+    if (c == NULL) // Kontrola ukazatele
         return raise_error(ERR_NULL_POINTER, "pointer is NULL", __LINE__);
 //    assert(c != NULL);
-    if (cap < 0)
+    if (cap < 0) // Kontrola kapacity
         return raise_error(ERR_FUNC_ARG, "Function argument isnt acceptable", __LINE__);
 //    assert(cap >= 0);
-    if (c->obj == NULL && cap == 0) {
+    if (cap == 0) { // Pokud je kapacita 0, tak alokuje 0 pameti
         c->capacity = 0;
         c->obj = NULL;
-    } else {
+    } else { // Jinak alokuje pamet pro cap objektu
         c->capacity = cap;
         c->obj = my_calloc(c->capacity, sizeof(struct obj_t));
         if (c->obj == NULL)
             return raise_error(ERR_ALLOC, "calloc() failed", __LINE__);
     }
-    c->size = 0;
-    return 0;
+    c->size = 0; // Nastavi velikost na 0
+    return 0; // Vrati 0
 }
 
 /*
@@ -132,15 +132,13 @@ int init_cluster(struct cluster_t *c, int cap) {
  */
 int clear_cluster(struct cluster_t *c)
 {
-    if (c == NULL) {
+    if (c == NULL) { // Kontrola ukazatele
         return raise_error(ERR_NULL_POINTER, "pointer is NULL", __LINE__);
     }
 //    assert(c != NULL);
-    c->size = 0;
-    c->capacity = 0;
-    free(c->obj);
-    c->obj = NULL;
-    return init_cluster(c, c->capacity);
+    free(c->obj); // Uvolni pamet
+    c->obj = NULL; // Nastavi ukazatel na NULL
+    return init_cluster(c, 0); // Inicializuje shluk s kapacitou 0
 }
 
 /// Chunk of cluster objects. Value recommended for reallocation.
@@ -176,14 +174,14 @@ struct cluster_t *resize_cluster(struct cluster_t *c, int new_cap)
  */
 int append_cluster(struct cluster_t *c, struct obj_t obj)
 {
-    if (c == NULL)
+    if (c == NULL) // Kontrola ukazatele
         return raise_error(ERR_NULL_POINTER, "pointer is NULL", __LINE__);
 //    assert(c != NULL);
-    if (c->size >= c->capacity)
-        if (resize_cluster(c, c->capacity + CLUSTER_CHUNK) == NULL)
+    if (c->size >= c->capacity) // Pokud je velikost >= kapacite, tak zvetsi shluk
+        if (resize_cluster(c, c->capacity + CLUSTER_CHUNK) == NULL) // Pokud se nepodari zvetsit shluk, tak vraci chybu
             return raise_error(ERR_ALLOC, "Reallocation failed", __LINE__);
-    c->obj[c->size] = obj;
-    c->size++;
+    c->obj[c->size] = obj; // Prida objekt na konec shluku
+    c->size++; // Zvetsi velikost shluku
     return 0;
 }
 
@@ -199,14 +197,14 @@ void sort_cluster(struct cluster_t *c);
  */
 int merge_clusters(struct cluster_t *c1, struct cluster_t *c2)
 {
-    if (c1 == NULL || c2 == NULL)
+    if (c1 == NULL || c2 == NULL) // Kontrola ukazatele
         return raise_error(ERR_NULL_POINTER, "pointer is NULL", __LINE__);
 //    assert(c1 != NULL);
 //    assert(c2 != NULL);
 
-    sort_cluster(c1);
-    for (int i = 0; i < c2->size; i++) {
-        if (append_cluster(c1, c2->obj[i]) != 0)
+    sort_cluster(c1); // Seradi shluk c1
+    for (int i = 0; i < c2->size; i++) { // Projde vsechny objekty v c2
+        if (append_cluster(c1, c2->obj[i]) != 0) // Pokud se nepodari pridat objekt, tak vraci chybu
             return raise_error(ERR_INTERNAL, "Internal error", __LINE__);
     }
     return 0;
@@ -222,13 +220,13 @@ int merge_clusters(struct cluster_t *c1, struct cluster_t *c2)
 */
 int remove_cluster(struct cluster_t *carr, int narr, int idx)
 {
-    if (idx >= narr || idx < 0 || narr < 0)
+    if (idx >= narr || idx < 0 || narr < 0) // Kontrola indexu
         return raise_error(ERR_FUNC_ARG, "Function argument isnt acceptable", __LINE__);
 //    assert(idx < narr);
 //    assert(narr > 0);
-    if (clear_cluster(&carr[idx]) != 0)
+    if (clear_cluster(&carr[idx]) != 0) // Pokud se nepodari uvolnit pamet, tak vraci chybu
         return raise_error(ERR_INTERNAL, "Internal error", __LINE__);
-    for (int i = idx; i < narr - 1; i++) {
+    for (int i = idx; i < narr - 1; i++) { // Posune vsechny shluky o jedno doleva
         carr[i] = carr[i + 1];
     }
     return narr - 1;
@@ -238,7 +236,7 @@ int remove_cluster(struct cluster_t *carr, int narr, int idx)
  Pocita Euklidovskou vzdalenost mezi dvema objekty.
  */
 float obj_distance(struct obj_t *o1, struct obj_t *o2) {
-    if (o1 == NULL || o2 == NULL){
+    if (o1 == NULL || o2 == NULL){ // Kontrola ukazatele
         raise_error(ERR_NULL_POINTER, "pointer is NULL", __LINE__);
         return -1;
     }
@@ -249,8 +247,8 @@ float obj_distance(struct obj_t *o1, struct obj_t *o2) {
     float y1 = o1->y;
     float x2 = o2->x;
     float y2 = o2->y;
-    float distance = sqrtf(powf(x2 - x1, 2) + powf(y2 - y1, 2));
-    return distance;
+    float distance = sqrtf(powf(x2 - x1, 2) + powf(y2 - y1, 2)); // Vypocet vzdalenosti
+    return distance; // Vraci vzdalenost
 }
 
 /*
@@ -258,11 +256,11 @@ float obj_distance(struct obj_t *o1, struct obj_t *o2) {
 */
 float cluster_distance(struct cluster_t *c1, struct cluster_t *c2)
 {
-    if (c1 == NULL || c2 == NULL) {
+    if (c1 == NULL || c2 == NULL) { // Kontrola ukazatele
         raise_error(ERR_NULL_POINTER, "pointer is NULL", __LINE__);
         return -1;
     }
-    if (c1->size <= 0 || c2->size <= 0) {
+    if (c1->size <= 0 || c2->size <= 0) { // Kontrola velikosti shluku
         raise_error(ERR_FUNC_ARG, "Function argument isnt acceptable", __LINE__);
         return -1;
     }
@@ -272,11 +270,11 @@ float cluster_distance(struct cluster_t *c1, struct cluster_t *c2)
 //    assert(c2 != NULL);
 //    assert(c2->size > 0);
 
-    float min = INFINITY;
+    float min = INFINITY; // Nastavi min na nekonecno
     for (int i = 0; i < c1->size; i++) {
         for (int j = 0; j < c2->size; j++) {
-            float dist = obj_distance(&c1->obj[i], &c2->obj[j]);
-            if (dist < 0)
+            float dist = obj_distance(&c1->obj[i], &c2->obj[j]); // Vypocita vzdalenost mezi objekty
+            if (dist < 0) // Pokud se nepodari vypocitat vzdalenost, tak vraci chybu
             {
                 raise_error(ERR_INTERNAL, "Internal error", __LINE__);
                 return -1;
@@ -297,15 +295,15 @@ float cluster_distance(struct cluster_t *c1, struct cluster_t *c2)
 */
 int find_neighbours(struct cluster_t *carr, int narr, int *c1, int *c2)
 {
-    if (narr <= 0)
+    if (narr <= 0) // Kontrola velikosti pole
         return raise_error(ERR_FUNC_ARG, "Function argument isnt acceptable", __LINE__);
 //    assert(narr > 0);
 
-    float min = INFINITY;
+    float min = INFINITY; // Nastavi min na nekonecno
     for (int i = 0; i < narr; i++) {
         for (int j = i + 1; j < narr; j++) {
-            float dist = cluster_distance(&carr[i], &carr[j]);
-            if (dist < 0)
+            float dist = cluster_distance(&carr[i], &carr[j]); // Vypocita vzdalenost mezi shluky
+            if (dist < 0) // Pokud se nepodari vypocitat vzdalenost, tak vraci chybu
                 return raise_error(ERR_INTERNAL, "Internal error", __LINE__);
             if (dist < min) {
                 min = dist;
@@ -364,10 +362,10 @@ int check_unique_id(struct cluster_t *arr, int size, int id)
 {
     for (int i = 0; i < size; i++) {
         if (arr[i].obj->id == id) {
-            return 0;
+            return 0; // Neni unikatni
         }
     }
-    return 1;
+    return 1; // Je unikatni
 }
 
 /**
@@ -381,8 +379,8 @@ int check_unique_id(struct cluster_t *arr, int size, int id)
 void deallocate_clusters(struct cluster_t **arr, int n)
 {
     for (int i = 0; i < n; i++)
-        clear_cluster(&(*arr)[i]);
-    free((*arr));
+        clear_cluster(&(*arr)[i]); // Dealokuje pamet pro kazdy shluk
+    free((*arr)); // Dealokuje pamet pro pole shluku
     *arr = NULL;
 }
 
@@ -395,28 +393,28 @@ void deallocate_clusters(struct cluster_t **arr, int n)
 */
 int load_clusters(char *filename, struct cluster_t **arr)
 {
-    if (arr == NULL)
+    if (arr == NULL) // Kontrola ukazatele
         return raise_error(ERR_NULL_POINTER, "Pointer is NULL", __LINE__);
 //    assert(arr != NULL);
 
     FILE *file = fopen(filename, "r");
-    if (file == NULL) {
+    if (file == NULL) { // Kontrola otevreni souboru
         return raise_error(ERR_INPUT_FILE, "File could not be opened.", __LINE__);
     }
-    char buffer[102];
-    fgets(buffer, 102, file);
-    char *endPt = NULL;
-    endPt = strchr(buffer, '=');
-    if (endPt == NULL) {
+    char buffer[102]; // Buffer pro nacitani radku
+    fgets(buffer, 102, file); // Nacte prvni radek s poctem objektu
+    char *endPt = NULL; // Ukazatel na konec nacteneho cisla
+    endPt = strchr(buffer, '='); // Nalezne znak '='
+    if (endPt == NULL) { // Pokud se nepodari najit znak '=', vraci chybu
         fclose(file);
         return raise_error(ERR_INPUT_FILE, "File is not in the correct format. First line should be count=N", __LINE__);
     }
-    int count = strtol(endPt+1, &endPt, 10);
-    if (count <= 0) {
+    int count = strtol(endPt+1, &endPt, 10); // Nacte cislo za znakem '=' a ulozi do promenne count
+    if (count <= 0) { // Pokud se nepodari nacist cislo, vraci chybu
         fclose(file);
         return raise_error(ERR_INPUT_FILE, "File is not in the correct format. Count < 0", __LINE__);
     }
-    if (*endPt != '\0' && *endPt != '\n') {
+    if (*endPt != '\0' && *endPt != '\n') { // Pokud se na radku nachazi neco jineho nez cislo, vraci chybu
         fclose(file);
         return raise_error(ERR_INPUT_FILE, "File is not in the correct format. Sth is after count=N", __LINE__);
     }
@@ -427,17 +425,27 @@ int load_clusters(char *filename, struct cluster_t **arr)
         int id;
         float x, y;
         id = strtol(buffer, &endPt, 10);
-        x = (float) strtol(endPt, &endPt, 10);
-        y = (float) strtol(endPt, &endPt, 10);
-        if (id < 0 || x < 0 || y < 0 || x > 1000 || y > 1000) {
+        if (*endPt != ' ') {
             deallocate_clusters(&(*arr), i);
-            return raise_error(ERR_INPUT_OBJECTS, "File is not in the correct format. OBJ params are out of range.",
+            return raise_error(ERR_INPUT_FILE, "File is not in the correct format. ID is not followed by space or is not a int number",
                                __LINE__);
         }
+        x = (float) strtol(endPt, &endPt, 10);
+        if (*endPt != ' ') {
+            deallocate_clusters(&(*arr), i);
+            return raise_error(ERR_INPUT_FILE, "File is not in the correct format. X is not followed by space or is not a int number",
+                               __LINE__);
+        }
+        y = (float) strtol(endPt, &endPt, 10);
         if (*endPt != '\0' && *endPt != '\n') {
             deallocate_clusters(&(*arr), i);
             return raise_error(ERR_INPUT_OBJECTS,
                                "File is not in the correct format. Something is after OBJ in line or OBJ format is incorrect",
+                               __LINE__);
+        }
+        if (id < 0 || x < 0 || y < 0 || x > 1000 || y > 1000) {
+            deallocate_clusters(&(*arr), i);
+            return raise_error(ERR_INPUT_OBJECTS, "File is not in the correct format. OBJ params are out of range.",
                                __LINE__);
         }
         if (!check_unique_id(*arr, i, id)) {
